@@ -1,9 +1,10 @@
-# scanner.py - UT BOT SCANNER v2.5 (667 SAHAM BEI dari data.csv)
+# scanner.py - UT BOT SCANNER v2.7 (667 SAHAM BEI + RSI FILTER)
 import pandas as pd
 import numpy as np
 import yfinance as yf
 import requests
 import datetime as dt
+import time
 
 try:
     from config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
@@ -15,6 +16,8 @@ except:
 # ⚙️ SETTING UT BOT - BISA DIUBAH DI SINI
 UT_KEY_VALUE = 2.0    # Default: 2.0 (1.0=agresif, 3.0=konservatif)
 UT_ATR_PERIOD = 10    # Default: 10 (5=cepat, 14=lambat)
+RSI_PERIOD = 14       # RSI period
+RSI_BUY_THRESHOLD = 50  # RSI > 50 untuk BUY signal
 
 def load_bei_tickers():
     """🚀 LOAD 667 SAHAM BEI dari data.csv"""
@@ -28,6 +31,18 @@ def load_bei_tickers():
     except Exception as e:
         print(f"❌ Error load data.csv: {e}")
         return []
+
+def calculate_rsi(data, period=14):
+    """🔥 RSI CALCULATION - Filter sinyal UT BOT"""
+    try:
+        delta = data['Close'].diff()
+        gain = delta.where(delta > 0, 0).rolling(window=period).mean()
+        loss = -delta.where(delta < 0, 0).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi.iloc[-1] if not pd.isna(rsi.iloc[-1]) else 50
+    except:
+        return 50
 
 def fix_yfinance_data(data):
     """Fix MultiIndex columns dari yfinance terbaru"""
@@ -99,33 +114,44 @@ def ut_bot_signals(df: pd.DataFrame, key_value: float = 2.0, atr_period: int = 1
     return bool(pos == 1), bool(pos == -1)
 
 def check_ut_bot_signal(ticker: str, key_value: float = 2.0, atr_period: int = 10) -> dict:
-    try:
-        data = yf.download(ticker+'.JK', period="10d", interval="1d", progress=False, auto_adjust=False)
-        data = fix_yfinance_data(data)
-        
-        if len(data) < 10:
+    """🔍 UT BOT + RSI FILTER - SINYAL INSTAN + AKURAT"""
+    for attempt in range(3):  # Retry 3x kalau yfinance error
+        try:
+            data = yf.download(ticker+'.JK', period="15d", interval="1d", progress=False, auto_adjust=False)
+            if data.empty or len(data) < 15:
+                time.sleep(0.5)
+                continue
+                
+            data = fix_yfinance_data(data)
+            
+            # UT BOT: Cek perubahan warna (merah → hijau)
+            ut_buy_today, _ = ut_bot_signals(data.iloc[:-1], key_value, atr_period)
+            ut_buy_now, _ = ut_bot_signals(data, key_value, atr_period)
+            
+            # RSI FILTER: Konfirmasi kekuatan (>50)
+            rsi_value = calculate_rsi(data, RSI_PERIOD)
+            
+            # ✅ SINYAL FRESH: UT BOT hijau + RSI > 50
+            if ut_buy_now and not ut_buy_today and rsi_value > RSI_BUY_THRESHOLD:
+                return {
+                    "ticker": ticker,
+                    "action": f"🟢 UT BOT BUY (RSI {rsi_value:.0f})",
+                    "price": float(data['Close'].iloc[-1]),
+                    "rsi": rsi_value,
+                    "date": data.index[-1].strftime("%d/%m")
+                }
             return None
-        
-        # 🔍 CEK SINYAL FRESH HARI INI
-        ut_buy_today, _ = ut_bot_signals(data.iloc[:-1], key_value, atr_period)
-        ut_buy_now, _ = ut_bot_signals(data, key_value, atr_period)
-        
-        if ut_buy_now and not ut_buy_today:
-            return {
-                "ticker": ticker,
-                "action": "🟢 UT BOT BUY HARI INI",
-                "price": float(data['Close'].iloc[-1]),
-                "date": data.index[-1].strftime("%d/%m")
-            }
-        return None
-    except:
-        return None
+        except Exception as e:
+            if attempt == 2:
+                return None
+            time.sleep(1)
+    return None
 
 def test_settings_comparison(tickers: list, sample_size: int = 50):
-    """Test 3 setting UT BOT"""
-    print("\n" + "="*60)
-    print("🧪 TESTING 3 SETTING UT BOT (667 SAHAM BEI)")
-    print("="*60)
+    """🧪 Test 3 setting UT BOT + RSI"""
+    print("\n" + "="*70)
+    print("🔥 UT BOT + RSI SCANNER v2.7 (667 SAHAM BEI)")
+    print("="*70)
     
     settings = [
         ("AGRESIF", 1.0, 5),
@@ -137,9 +163,11 @@ def test_settings_comparison(tickers: list, sample_size: int = 50):
     
     for name, kv, atr in settings:
         test_signals = []
-        print(f"\n📊 Testing {name} (key_value={kv}, atr_period={atr})...")
+        print(f"\n📊 Testing {name} (key={kv}, atr={atr}, RSI>{RSI_BUY_THRESHOLD})...")
         
         for i, ticker in enumerate(tickers[:sample_size]):
+            if i % 10 == 0:
+                print(f"   Progress: {i}/{sample_size}")
             signal = check_ut_bot_signal(ticker, kv, atr)
             if signal:
                 test_signals.append(signal['ticker'])
@@ -151,71 +179,71 @@ def test_settings_comparison(tickers: list, sample_size: int = 50):
             "atr_period": atr
         }
         
-        print(f"   ✅ {len(test_signals)}/{sample_size} sinyal FRESH")
+        print(f"   ✅ {len(test_signals)}/{sample_size} sinyal (RSI>{RSI_BUY_THRESHOLD})")
         if test_signals[:5]:
             print(f"   📌 Contoh: {', '.join(test_signals[:5])}")
     
-    print("\n" + "="*60)
-    print("📈 REKOMENDASI:")
-    print("="*60)
+    print("\n" + "="*70)
+    print("📈 REKOMENDASI (RSI FILTER AKTIF):")
+    print("="*70)
     for name in results:
         print(f"  {name:<12} : {results[name]['count']} sinyal")
-    print("="*60)
+    print("="*70)
     
     return results
 
 def main():
-    print("🚀 UT BOT SCANNER v2.6 - 667 SAHAM BEI (ALWAYS SEND)")
+    print("🚀 UT BOT + RSI SCANNER v2.7 - 667 SAHAM BEI")
     
-    # 🔥 LOAD 667 SAHAM DARI data.csv
+    # 🔥 LOAD 667 SAHAM
     tickers = load_bei_tickers()
     if not tickers:
         print("❌ Gagal load data.csv")
         return
     
-    # 🧪 TEST 3 SETTING (SAMPLE 50 SAHAM CEPAT)
-    print(f"\n🔥 SCAN {len(tickers)} SAHAM BEI...")
-    results = test_settings_comparison(tickers, sample_size=50)  # Cepat!
+    # 🧪 SCAN 50 SAHAM CEPAT (bisa diubah ke len(tickers) untuk full)
+    print(f"\n🔥 SCAN {len(tickers)} SAHAM BEI (sample 50)...")
+    results = test_settings_comparison(tickers, sample_size=50)
     
-    print(f"\n✅ SCAN SELESAI!")
+    print(f"\n✅ SCAN + RSI FILTER SELESAI!")
     
-    # 📱 TELEGRAM SELALU KIRIM (bahkan 0 sinyal)
+    # 📱 TELEGRAM SELALU KIRIM
     jakarta_tz = dt.timezone(dt.timedelta(hours=7))
     now_wib = dt.datetime.now(jakarta_tz).strftime("%d/%m %H:%M WIB")
     
-    message = f"🧪 UT BOT 3 SETTING - 667 SAHAM BEI\n({now_wib})\n\n"
-    message += f"📊 SCAN: {len(tickers)} saham BEI\n\n"
+    message = f"🔥 UT BOT + RSI v2.7 - 667 SAHAM BEI\n({now_wib})\n\n"
+    message += f"📊 SCAN: {len(tickers)} saham BEI (RSI>{RSI_BUY_THRESHOLD})\n\n"
     
     # RINGKASAN
     total_signals = sum(r['count'] for r in results.values())
-    message += f"🔥 AGRESIF     : {results['AGRESIF']['count']}\n"
-    message += f"⭐ STANDAR     : {results['STANDAR']['count']}\n"
-    message += f"🛡️ KONSERVATIF: {results['KONSERVATIF']['count']}\n\n"
+    message += f"🔥 AGRESIF      : {results['AGRESIF']['count']}\n"
+    message += f"⭐ STANDAR      : {results['STANDAR']['count']}\n"
+    message += f"🛡️ KONSERVATIF  : {results['KONSERVATIF']['count']}\n\n"
     
-    # DAFTAR SINYAL (max 10 per kategori)
+    # DAFTAR SINYAL
     for name in ['AGRESIF', 'STANDAR', 'KONSERVATIF']:
         signals = results[name]['tickers']
         message += f"📌 {name}:\n"
         if signals:
-            for t in signals[:10]:
+            for t in signals[:15]:  # Max 15 per kategori
                 message += f"• {t}\n"
-            if len(signals) > 10:
-                message += f"... +{len(signals)-10} lagi\n"
+            if len(signals) > 15:
+                message += f"... +{len(signals)-15} lagi\n"
         else:
             message += "-\n"
         message += "\n"
     
-    # SELALU KIRIM (bahkan 0 sinyal)
+    # STATUS
     if total_signals == 0:
-        message += "ℹ️  PASAR SIDEWAYS - Belum ada sinyal UT BOT\n⏳ Tunggu breakout!"
+        message += "ℹ️ PASAR SIDEWAYS - Belum ada sinyal kuat\n⏳ Tunggu RSI>50 + UT BOT hijau!"
     else:
-        message += f"📈 {total_signals} sinyal total!"
+        message += f"📈 {total_signals} SINYAL KUAT (RSI>{RSI_BUY_THRESHOLD})!"
     
-    message += f"\n\n📊 Update data.csv → rerun scanner.py"
+    message += f"\n\n⚙️ RSI>{RSI_BUY_THRESHOLD} | Update data.csv → rerun"
     
     if TELEGRAM_OK:
         send_telegram_message(message)
-        print("📱 Telegram OK! (SELALU KIRIM)")
+        print("📱 Telegram OK! (RSI Filter aktif)")
     else:
         print("📱 Telegram skip - cek config.py")
         print(message)
