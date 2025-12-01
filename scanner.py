@@ -203,7 +203,7 @@ def main():
     
     # 🧪 SCAN 50 SAHAM CEPAT (bisa diubah ke len(tickers) untuk full)
     print(f"\n🔥 SCAN {len(tickers)} SAHAM BEI (sample 50)...")
-    results = test_settings_comparison(tickers, sample_size=50)
+    results = test_settings_comparison(tickers, sample_size=len(tickers))  # FULL 667!
     
     print(f"\n✅ SCAN + RSI FILTER SELESAI!")
     
