@@ -33,6 +33,6 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add data.csv
+          git add data/data.csv
           git diff --staged --quiet || git commit -m "Update data.csv $(date)"
           git push
