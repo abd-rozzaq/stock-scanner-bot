@@ -1,0 +1,16 @@
+2026-02-13 07:02:26 [INFO] Telegram Config Loaded. Chat ID: 6711779207
+2026-02-13 07:02:26 [INFO] Scanner BSJP V2.0.0 dimulai.
+2026-02-13 07:02:26 [INFO] Membaca 'data/data.csv' (Kolom: AADI)
+2026-02-13 07:02:26 [INFO] Total ticker unik: 666
+2026-02-13 07:02:26 [INFO] Total saham untuk di-scan: 666
+2026-02-13 07:02:26 [INFO] File blacklist.csv tidak ditemukan — tidak ada blacklist aktif.
+2026-02-13 07:02:29 [INFO] HIT: BAPI | Chg: +8.33% | RSI: 58.9 | Score: 4/4 | Value: 1.43B
+2026-02-13 07:02:30 [INFO] HIT: BEST | Chg: +3.36% | RSI: 60.5 | Score: 4/4 | Value: 8.53B
+2026-02-13 07:02:37 [INFO] HIT: GRPM | Chg: +3.91% | RSI: 99.9 | Score: 3/4 | Value: 11.52B
+2026-02-13 07:02:39 [INFO] HIT: IDEA | Chg: +9.42% | RSI: 64.3 | Score: 3/4 | Value: 3.05B
+2026-02-13 07:02:40 [INFO] HIT: INDS | Chg: +21.13% | RSI: 100.0 | Score: 3/4 | Value: 90.28B
+2026-02-13 07:02:52 [INFO] HIT: ROCK | Chg: +24.79% | RSI: 68.4 | Score: 4/4 | Value: 1.64B
+2026-02-13 07:02:58 [INFO] HIT: TRUK | Chg: +24.74% | RSI: 50.3 | Score: 3/4 | Value: 1.06B
+2026-02-13 07:02:59 [INFO] Mengirim hasil ke Telegram...
+2026-02-13 07:03:00 [INFO] Pesan Telegram terkirim (1/1).
+2026-02-13 07:03:00 [INFO] Scanner selesai dalam 34.3 detik.
