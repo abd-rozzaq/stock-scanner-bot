@@ -1,0 +1,13 @@
+2026-04-28 08:56:43 [INFO] Telegram Config Loaded. Chat ID: 6711779207
+2026-04-28 08:56:43 [INFO] Combined Screener V3.0.0 dimulai.
+2026-04-28 08:56:43 [INFO] Membaca 'data/data.csv' (Kolom: AADI)
+2026-04-28 08:56:43 [INFO] Total ticker unik: 666
+2026-04-28 08:56:43 [INFO] Total saham untuk di-scan: 666
+2026-04-28 08:56:43 [INFO] File blacklist.csv tidak ditemukan — tidak ada blacklist aktif.
+2026-04-28 08:57:08 [INFO] HIT: ELSA | Chg: +5.77% | RSI: 65.2 | Score: 4/4 | Value: 146.239B | Bandar: True
+2026-04-28 08:57:09 [INFO] HIT: ESIP | Chg: +34.75% | RSI: 78.4 | Score: 4/4 | Value: 275.207B | Bandar: True
+2026-04-28 08:57:32 [INFO] HIT: KOCI | Chg: +34.82% | RSI: 60.9 | Score: 4/4 | Value: 43.017B | Bandar: True
+2026-04-28 08:57:57 [INFO] HIT: PADA | Chg: +21.64% | RSI: 65.2 | Score: 4/4 | Value: 53.310B | Bandar: True
+2026-04-28 08:58:26 [INFO] Mengirim hasil ke Telegram...
+2026-04-28 08:58:27 [INFO] Pesan Telegram terkirim (1/1).
+2026-04-28 08:58:27 [INFO] Scanner selesai dalam 103.6 detik.

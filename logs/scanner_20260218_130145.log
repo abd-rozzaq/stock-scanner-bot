@@ -1,0 +1,52 @@
+2026-02-18 13:01:45 [INFO] Telegram Config Loaded. Chat ID: 6711779207
+2026-02-18 13:01:45 [INFO] Scanner BSJP V2.0.0 dimulai.
+2026-02-18 13:01:45 [INFO] Membaca 'data/data.csv' (Kolom: AADI)
+2026-02-18 13:01:45 [INFO] Total ticker unik: 666
+2026-02-18 13:01:45 [INFO] Total saham untuk di-scan: 666
+2026-02-18 13:01:45 [INFO] File blacklist.csv tidak ditemukan — tidak ada blacklist aktif.
+2026-02-18 13:01:50 [INFO] HIT: ARTA | Chg: +6.69% | RSI: 53.5 | Score: 3/4 | Value: 0.30B
+2026-02-18 13:01:51 [INFO] HIT: ASSA | Chg: +5.15% | RSI: 57.9 | Score: 3/4 | Value: 17.32B
+2026-02-18 13:01:51 [INFO] HIT: ATAP | Chg: +25.00% | RSI: 61.6 | Score: 4/4 | Value: 18.23B
+2026-02-18 13:01:54 [INFO] HIT: BBRM | Chg: +5.94% | RSI: 51.7 | Score: 3/4 | Value: 11.44B
+2026-02-18 13:01:54 [INFO] HIT: BEEF | Chg: +7.69% | RSI: 46.7 | Score: 3/4 | Value: 5.13B
+2026-02-18 13:01:56 [INFO] HIT: BKDP | Chg: +9.68% | RSI: 65.3 | Score: 3/4 | Value: 0.42B
+2026-02-18 13:01:57 [INFO] HIT: BOAT | Chg: +10.40% | RSI: 51.4 | Score: 3/4 | Value: 4.76B
+2026-02-18 13:02:00 [INFO] HIT: BULL | Chg: +23.33% | RSI: 59.2 | Score: 4/4 | Value: 670.57B
+2026-02-18 13:02:01 [INFO] HIT: CASH | Chg: +9.52% | RSI: 58.7 | Score: 3/4 | Value: 1.61B
+2026-02-18 13:02:10 [INFO] HIT: ELSA | Chg: +8.78% | RSI: 72.8 | Score: 3/4 | Value: 114.09B
+2026-02-18 13:02:13 [INFO] HIT: FOLK | Chg: +25.00% | RSI: 56.3 | Score: 4/4 | Value: 21.44B
+2026-02-18 13:02:17 [INFO] HIT: GTSI | Chg: +13.91% | RSI: 53.0 | Score: 3/4 | Value: 168.29B
+2026-02-18 13:02:20 [INFO] HIT: HOPE | Chg: +10.00% | RSI: 59.4 | Score: 3/4 | Value: 3.74B
+2026-02-18 13:02:20 [INFO] HIT: HUMI | Chg: +14.53% | RSI: 53.6 | Score: 4/4 | Value: 192.12B
+2026-02-18 13:02:21 [INFO] HIT: ICON | Chg: +9.41% | RSI: 59.8 | Score: 3/4 | Value: 0.23B
+2026-02-18 13:02:21 [INFO] HIT: IDEA | Chg: +9.93% | RSI: 68.4 | Score: 3/4 | Value: 4.17B
+2026-02-18 13:02:23 [INFO] HIT: INDS | Chg: +24.89% | RSI: 100.0 | Score: 3/4 | Value: 256.74B
+2026-02-18 13:02:23 [INFO] HIT: INDY | Chg: +6.74% | RSI: 65.8 | Score: 3/4 | Value: 149.14B
+2026-02-18 13:02:23 [INFO] HIT: INET | Chg: +11.98% | RSI: 47.2 | Score: 3/4 | Value: 491.41B
+2026-02-18 13:02:25 [INFO] HIT: ISSP | Chg: +7.33% | RSI: 65.4 | Score: 3/4 | Value: 2.66B
+2026-02-18 13:02:28 [INFO] HIT: KBAG | Chg: +9.09% | RSI: 64.9 | Score: 4/4 | Value: 1.77B
+2026-02-18 13:02:30 [INFO] HIT: KLAS | Chg: +4.44% | RSI: 44.6 | Score: 3/4 | Value: 2.64B
+2026-02-18 13:02:31 [INFO] HIT: KOIN | Chg: +9.41% | RSI: 54.3 | Score: 3/4 | Value: 0.02B
+2026-02-18 13:02:32 [INFO] HIT: KOTA | Chg: +9.38% | RSI: 63.0 | Score: 4/4 | Value: 5.25B
+2026-02-18 13:02:33 [INFO] HIT: LIVE | Chg: +12.30% | RSI: 54.4 | Score: 3/4 | Value: 3.06B
+2026-02-18 13:02:36 [INFO] HIT: MANG | Chg: +4.69% | RSI: 57.4 | Score: 3/4 | Value: 2.03B
+2026-02-18 13:02:37 [INFO] HIT: MBMA | Chg: +8.28% | RSI: 62.3 | Score: 3/4 | Value: 289.45B
+2026-02-18 13:02:38 [INFO] HIT: MEDC | Chg: +6.65% | RSI: 70.6 | Score: 3/4 | Value: 277.24B
+2026-02-18 13:02:42 [INFO] HIT: MPPA | Chg: +11.54% | RSI: 55.5 | Score: 3/4 | Value: 30.23B
+2026-02-18 13:02:43 [INFO] HIT: MTFN | Chg: +7.14% | RSI: 55.7 | Score: 3/4 | Value: 2.77B
+2026-02-18 13:02:46 [INFO] HIT: NELY | Chg: +4.48% | RSI: 51.8 | Score: 3/4 | Value: 1.41B
+2026-02-18 13:02:49 [INFO] HIT: PART | Chg: +34.33% | RSI: 80.5 | Score: 3/4 | Value: 54.09B
+2026-02-18 13:02:54 [INFO] HIT: PSKT | Chg: +21.99% | RSI: 60.6 | Score: 3/4 | Value: 74.46B
+2026-02-18 13:02:57 [INFO] HIT: RALS | Chg: +4.34% | RSI: 71.7 | Score: 4/4 | Value: 20.88B
+2026-02-18 13:02:57 [INFO] HIT: RATU | Chg: +13.43% | RSI: 56.4 | Score: 3/4 | Value: 293.36B
+2026-02-18 13:02:59 [INFO] HIT: ROCK | Chg: +24.83% | RSI: 76.3 | Score: 4/4 | Value: 3.99B
+2026-02-18 13:02:59 [INFO] HIT: RODA | Chg: +8.33% | RSI: 65.4 | Score: 3/4 | Value: 0.33B
+2026-02-18 13:03:04 [INFO] HIT: SMDR | Chg: +3.54% | RSI: 57.4 | Score: 3/4 | Value: 36.22B
+2026-02-18 13:03:06 [INFO] HIT: SPRE | Chg: +7.81% | RSI: 22.2 | Score: 3/4 | Value: 9.40B
+2026-02-18 13:03:13 [INFO] HIT: UDNG | Chg: +9.79% | RSI: 55.8 | Score: 3/4 | Value: 8.11B
+2026-02-18 13:03:14 [INFO] HIT: UNIC | Chg: +3.70% | RSI: 88.5 | Score: 3/4 | Value: 1.09B
+2026-02-18 13:03:16 [INFO] HIT: WMUU | Chg: +6.06% | RSI: 57.4 | Score: 3/4 | Value: 4.73B
+2026-02-18 13:03:18 [INFO] Mengirim hasil ke Telegram...
+2026-02-18 13:03:18 [INFO] Pesan Telegram terkirim (1/2).
+2026-02-18 13:03:20 [INFO] Pesan Telegram terkirim (2/2).
+2026-02-18 13:03:20 [INFO] Scanner selesai dalam 95.0 detik.

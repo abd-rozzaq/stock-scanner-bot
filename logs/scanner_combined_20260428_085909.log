@@ -1,0 +1,15 @@
+2026-04-28 08:59:09 [INFO] Telegram Config Loaded. Chat ID: 6711779207
+2026-04-28 08:59:09 [INFO] Scanner BSJP Combined V2.1.0 dimulai.
+2026-04-28 08:59:09 [INFO] Membaca 'data/data.csv' (Kolom: AADI)
+2026-04-28 08:59:09 [INFO] Total ticker unik: 666
+2026-04-28 08:59:09 [INFO] File blacklist.csv tidak ditemukan.
+2026-04-28 08:59:21 [INFO] HIT: BOBA | Chg: +22.14% | RSI: 73.7 | Score: 4/4 | Value: 10.11B
+2026-04-28 08:59:38 [INFO] HIT: ELSA | Chg: +6.41% | RSI: 65.9 | Score: 4/4 | Value: 147.72B
+2026-04-28 08:59:40 [INFO] HIT: ESIP | Chg: +34.75% | RSI: 78.4 | Score: 4/4 | Value: 275.23B
+2026-04-28 08:59:49 [INFO] HIT: HBAT | Chg: +7.94% | RSI: 68.6 | Score: 4/4 | Value: 1.22B
+2026-04-28 09:00:01 [INFO] HIT: KJEN | Chg: +34.43% | RSI: 71.8 | Score: 4/4 | Value: 9.84B
+2026-04-28 09:00:04 [INFO] HIT: KOCI | Chg: +34.82% | RSI: 60.9 | Score: 4/4 | Value: 43.03B
+2026-04-28 09:00:08 [INFO] HIT: LMPI | Chg: +34.67% | RSI: 75.7 | Score: 4/4 | Value: 5.72B
+2026-04-28 09:00:27 [INFO] HIT: PADA | Chg: +21.64% | RSI: 65.2 | Score: 4/4 | Value: 55.36B
+2026-04-28 09:01:12 [INFO] Pesan Telegram terkirim (1/1).
+2026-04-28 09:01:12 [INFO] Scanner selesai dalam 123.3 detik.

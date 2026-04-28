@@ -1,0 +1,16 @@
+2026-04-28 11:46:51 [INFO] Telegram Config Loaded. Chat ID: 6711779207
+2026-04-28 11:46:51 [INFO] Claude Screener V3.0.0 dimulai.
+2026-04-28 11:46:51 [INFO] Membaca 'data/data.csv' (Kolom: AADI)
+2026-04-28 11:46:51 [INFO] Total ticker unik: 666
+2026-04-28 11:46:51 [INFO] Total saham untuk di-scan: 666
+2026-04-28 11:46:51 [INFO] File blacklist.csv tidak ditemukan — tidak ada blacklist aktif.
+2026-04-28 11:46:57 [INFO] HIT: BOBA | Chg: +22.90% | RSI: 73.9 | Score: 4/4 | Value: 10.384B | Bandar: True
+2026-04-28 11:47:09 [INFO] HIT: ELSA | Chg: +6.41% | RSI: 65.9 | Score: 4/4 | Value: 157.395B | Bandar: True
+2026-04-28 11:47:09 [INFO] HIT: ESIP | Chg: +34.75% | RSI: 78.4 | Score: 4/4 | Value: 275.313B | Bandar: True
+2026-04-28 11:47:16 [INFO] HIT: GULA | Chg: +5.14% | RSI: 59.9 | Score: 4/4 | Value: 32.486B | Bandar: True
+2026-04-28 11:47:30 [INFO] HIT: KOCI | Chg: +34.82% | RSI: 60.9 | Score: 4/4 | Value: 43.084B | Bandar: True
+2026-04-28 11:47:34 [INFO] HIT: LUCK | Chg: +34.29% | RSI: 82.0 | Score: 3/4 | Value: 19.506B | Bandar: True
+2026-04-28 11:47:47 [INFO] HIT: PADA | Chg: +23.98% | RSI: 66.0 | Score: 4/4 | Value: 59.963B | Bandar: True
+2026-04-28 11:48:14 [INFO] Mengirim hasil ke Telegram...
+2026-04-28 11:48:15 [INFO] Pesan Telegram terkirim (1/1).
+2026-04-28 11:48:15 [INFO] Scanner selesai dalam 83.3 detik.

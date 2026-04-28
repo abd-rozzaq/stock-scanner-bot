@@ -1,0 +1,24 @@
+2026-02-19 11:55:16 [INFO] Telegram Config Loaded. Chat ID: 6711779207
+2026-02-19 11:55:16 [INFO] Scanner BSJP V2.0.0 dimulai.
+2026-02-19 11:55:16 [INFO] Membaca 'data/data.csv' (Kolom: AADI)
+2026-02-19 11:55:16 [INFO] Total ticker unik: 666
+2026-02-19 11:55:16 [INFO] Total saham untuk di-scan: 666
+2026-02-19 11:55:16 [INFO] File blacklist.csv tidak ditemukan — tidak ada blacklist aktif.
+2026-02-19 11:55:18 [INFO] HIT: ANTM | Chg: +4.44% | RSI: 58.9 | Score: 3/4 | Value: 767.48B
+2026-02-19 11:55:18 [INFO] HIT: ASHA | Chg: +28.77% | RSI: 65.3 | Score: 4/4 | Value: 144.69B
+2026-02-19 11:55:18 [INFO] HIT: ASLC | Chg: +3.66% | RSI: 51.8 | Score: 3/4 | Value: 3.16B
+2026-02-19 11:55:21 [INFO] HIT: BRRC | Chg: +34.04% | RSI: 61.5 | Score: 4/4 | Value: 41.52B
+2026-02-19 11:55:25 [INFO] HIT: CNKO | Chg: +9.68% | RSI: 56.1 | Score: 4/4 | Value: 3.15B
+2026-02-19 11:55:35 [INFO] HIT: HRUM | Chg: +7.83% | RSI: 63.3 | Score: 3/4 | Value: 102.87B
+2026-02-19 11:55:37 [INFO] HIT: INKP | Chg: +4.30% | RSI: 63.5 | Score: 4/4 | Value: 317.44B
+2026-02-19 11:55:40 [INFO] HIT: ISSP | Chg: +4.42% | RSI: 70.5 | Score: 4/4 | Value: 3.91B
+2026-02-19 11:55:44 [INFO] HIT: KOCI | Chg: +35.00% | RSI: 59.8 | Score: 4/4 | Value: 45.15B
+2026-02-19 11:55:59 [INFO] HIT: NICL | Chg: +9.61% | RSI: 49.8 | Score: 3/4 | Value: 99.38B
+2026-02-19 11:56:05 [INFO] HIT: PSAB | Chg: +4.67% | RSI: 51.3 | Score: 3/4 | Value: 49.08B
+2026-02-19 11:56:11 [INFO] HIT: SAME | Chg: +4.12% | RSI: 58.7 | Score: 4/4 | Value: 2.39B
+2026-02-19 11:56:12 [INFO] HIT: SKBM | Chg: +24.55% | RSI: 62.5 | Score: 4/4 | Value: 3.59B
+2026-02-19 11:56:16 [INFO] HIT: SOFA | Chg: +5.99% | RSI: 52.7 | Score: 3/4 | Value: 11.56B
+2026-02-19 11:56:19 [INFO] HIT: TAMA | Chg: +10.00% | RSI: 65.9 | Score: 3/4 | Value: 0.71B
+2026-02-19 11:56:28 [INFO] Mengirim hasil ke Telegram...
+2026-02-19 11:56:28 [INFO] Pesan Telegram terkirim (1/1).
+2026-02-19 11:56:28 [INFO] Scanner selesai dalam 72.4 detik.

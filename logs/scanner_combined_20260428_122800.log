@@ -1,0 +1,19 @@
+2026-04-28 12:28:00 [INFO] Telegram Config Loaded. Chat ID: 6711779207
+2026-04-28 12:28:00 [INFO] Scanner BSJP Combined V2.1.0 dimulai.
+2026-04-28 12:28:00 [INFO] Membaca 'data/data.csv' (Kolom: AADI)
+2026-04-28 12:28:00 [INFO] Total ticker unik: 666
+2026-04-28 12:28:00 [INFO] File blacklist.csv tidak ditemukan.
+2026-04-28 12:28:00 [ERROR] 
+1 Failed download:
+2026-04-28 12:28:00 [ERROR] ['AALI.JK']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-04-28 12:28:05 [INFO] HIT: BOBA | Chg: +22.90% | RSI: 73.9 | Score: 4/4 | Value: 10.38B
+2026-04-28 12:28:15 [INFO] HIT: ELSA | Chg: +6.41% | RSI: 65.9 | Score: 4/4 | Value: 157.40B
+2026-04-28 12:28:16 [INFO] HIT: ESIP | Chg: +34.75% | RSI: 78.4 | Score: 4/4 | Value: 275.31B
+2026-04-28 12:28:22 [INFO] HIT: GULA | Chg: +5.14% | RSI: 59.9 | Score: 4/4 | Value: 32.49B
+2026-04-28 12:28:23 [INFO] HIT: HBAT | Chg: +7.94% | RSI: 68.6 | Score: 4/4 | Value: 1.28B
+2026-04-28 12:28:34 [INFO] HIT: KJEN | Chg: +34.43% | RSI: 71.8 | Score: 4/4 | Value: 9.97B
+2026-04-28 12:28:36 [INFO] HIT: KOCI | Chg: +34.82% | RSI: 60.9 | Score: 4/4 | Value: 43.08B
+2026-04-28 12:28:38 [INFO] HIT: LMPI | Chg: +34.67% | RSI: 75.7 | Score: 4/4 | Value: 5.96B
+2026-04-28 12:28:50 [INFO] HIT: PADA | Chg: +23.98% | RSI: 66.0 | Score: 4/4 | Value: 59.96B
+2026-04-28 12:29:19 [INFO] Pesan Telegram terkirim (1/1).
+2026-04-28 12:29:19 [INFO] Scanner selesai dalam 79.1 detik.

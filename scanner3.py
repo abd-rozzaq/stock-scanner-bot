@@ -126,7 +126,7 @@ def calculate_indicators(df: pd.DataFrame) -> pd.DataFrame:
     df['BuyPressMA5'] = haka_series.rolling(window=5).mean() * 100
     
     # Isi NaN awal (karena rolling) dengan nilai pertama yang tersedia agar tidak error
-    df['BuyPressMA5'] = df['BuyPressMA5'].fillna(method='bfill')
+    df['BuyPressMA5'] = df['BuyPressMA5'].bfill()
 
     # 6. Turnover (Value)
     df['Turnover'] = df['Close'] * df['Volume']

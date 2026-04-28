@@ -1,0 +1,8 @@
+2026-04-28 09:09:43 [INFO] Telegram Config Loaded. Chat ID: 6711779207
+2026-04-28 09:09:43 [INFO] Scanner V3.0.0 dimulai.
+2026-04-28 09:09:43 [INFO] Membaca 'data/data.csv' kolom 'AADI'. Total ticker unik: 666
+2026-04-28 09:09:43 [INFO] File blacklist.csv tidak ditemukan. Tidak ada blacklist aktif.
+2026-04-28 09:09:43 [WARNING] File data/bandar_value.csv tidak ditemukan. Filter 2 Bandar tidak dapat dihitung dari yfinance.
+2026-04-28 09:11:58 [INFO] Mengirim hasil ke Telegram...
+2026-04-28 09:11:58 [INFO] Pesan Telegram terkirim (1/1).
+2026-04-28 09:11:58 [INFO] Scanner selesai dalam 135.6 detik.

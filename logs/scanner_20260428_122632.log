@@ -1,0 +1,11 @@
+2026-04-28 12:26:32 [INFO] Telegram Config Loaded. Chat ID: 6711779207
+2026-04-28 12:26:32 [INFO] Scanner V3.0.0 dimulai.
+2026-04-28 12:26:32 [INFO] Membaca 'data/data.csv' kolom 'AADI'. Total ticker unik: 666
+2026-04-28 12:26:32 [INFO] File blacklist.csv tidak ditemukan. Tidak ada blacklist aktif.
+2026-04-28 12:26:32 [WARNING] File data/bandar_value.csv tidak ditemukan. Filter 2 Bandar tidak dapat dihitung dari yfinance.
+2026-04-28 12:26:32 [ERROR] 
+1 Failed download:
+2026-04-28 12:26:32 [ERROR] ['AALI.JK']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-04-28 12:27:47 [INFO] Mengirim hasil ke Telegram...
+2026-04-28 12:27:48 [INFO] Pesan Telegram terkirim (1/1).
+2026-04-28 12:27:48 [INFO] Scanner selesai dalam 75.9 detik.

@@ -1,0 +1,12 @@
+2026-04-27 11:11:28 [INFO] Telegram Config Loaded. Chat ID: 6711779207
+2026-04-27 11:11:28 [INFO] Combined Screener V3.0.0 dimulai.
+2026-04-27 11:11:28 [INFO] Membaca 'data/data.csv' (Kolom: AADI)
+2026-04-27 11:11:28 [INFO] Total ticker unik: 666
+2026-04-27 11:11:28 [INFO] Total saham untuk di-scan: 666
+2026-04-27 11:11:28 [INFO] File blacklist.csv tidak ditemukan — tidak ada blacklist aktif.
+2026-04-27 11:11:28 [INFO] HIT: AALI | Chg: +3.09% | RSI: 68.0 | Score: 4/4 | Value: 44.809B | Bandar: True
+2026-04-27 11:12:01 [INFO] HIT: JAWA | Chg: +34.64% | RSI: 74.0 | Score: 4/4 | Value: 27.612B | Bandar: True
+2026-04-27 11:12:44 [INFO] HIT: SMMT | Chg: +24.54% | RSI: 94.4 | Score: 3/4 | Value: 9.755B | Bandar: True
+2026-04-27 11:12:58 [INFO] Mengirim hasil ke Telegram...
+2026-04-27 11:12:59 [INFO] Pesan Telegram terkirim (1/1).
+2026-04-27 11:12:59 [INFO] Scanner selesai dalam 90.7 detik.
