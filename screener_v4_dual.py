@@ -27,6 +27,22 @@ import os
 import logging
 import time
 
+# ── Timezone WIB (UTC+7) ──────────────────────────────
+try:
+    from zoneinfo import ZoneInfo
+    WIB = ZoneInfo("Asia/Jakarta")
+except ImportError:
+    try:
+        import pytz
+        WIB = pytz.timezone("Asia/Jakarta")
+    except ImportError:
+        import datetime as _dt
+        WIB = _dt.timezone(_dt.timedelta(hours=7))
+
+def now_wib() -> dt.datetime:
+    """Kembalikan waktu sekarang dalam timezone WIB."""
+    return dt.datetime.now(tz=WIB)
+
 try:
     import requests
     REQUESTS_AVAILABLE = True
@@ -45,7 +61,7 @@ os.makedirs(LOG_DIR, exist_ok=True)
 
 log_filename = os.path.join(
     LOG_DIR,
-    f"scanner_{dt.datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+  f"scanner_{now_wib().strftime('%Y%m%d_%H%M%S')}.log"
 )
 
 logging.basicConfig(
@@ -415,7 +431,7 @@ def fetch_intraday_today(ticker: str, use_projection: bool = True) -> Optional[D
 
         # Volume projection
         if use_projection:
-            now_time    = dt.datetime.now().time()
+            now_time    = now_wib().time()
             elapsed_min = get_elapsed_market_minutes(now_time)
             if elapsed_min > 0:
                 raw_mult = TOTAL_MARKET_MINUTES / elapsed_min
@@ -524,7 +540,7 @@ def detect_session() -> str:
     Auto-deteksi sesi berdasarkan waktu WIB sekarang.
     Return: "SESI1" | "SESI2" | "UNKNOWN"
     """
-    now = dt.datetime.now().time()
+    now = now_wib().time()
     if SESI1_WINDOW_START <= now < SESI1_WINDOW_END:
         return "SESI1"
     elif SESI2_WINDOW_START <= now < SESI2_WINDOW_END:
@@ -550,7 +566,7 @@ def parse_session_arg() -> str:
 
 
 def get_today_str() -> str:
-    return dt.datetime.now().strftime("%Y%m%d")
+    return now_wib().strftime("%Y%m%d")
 
 
 def save_session1_results(results: List[Dict]) -> bool:
@@ -563,7 +579,7 @@ def save_session1_results(results: List[Dict]) -> bool:
     try:
         payload = {
             "date":      get_today_str(),
-            "timestamp": dt.datetime.now().isoformat(),
+            "timestamp": now_wib().isoformat(),
             "version":   VERSION,
             "count":     len(results),
             "tickers":   [r["ticker"] for r in results],
@@ -1092,7 +1108,7 @@ def print_sesi2_results(comparison: Dict, total: int, skipped: int,
 # 10. MAIN — DUAL SESSION SCANNER
 # ======================================================
 def run_scanner_dual():
-    scan_start   = dt.datetime.now()
+    scan_start   = now_wib()
     scan_time    = scan_start.strftime("%Y-%m-%d %H:%M:%S")
     now_time     = scan_start.time()
 
@@ -1226,7 +1242,7 @@ def run_scanner_dual():
 
     results.sort(key=sort_key)
 
-    elapsed_sec = (dt.datetime.now() - scan_start).total_seconds()
+    elapsed_sec = (now_wib() - scan_start).total_seconds()
 
     # ══════════════════════════════════════════════════
     # OUTPUT per sesi
