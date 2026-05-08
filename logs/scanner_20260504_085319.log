@@ -1,0 +1,22 @@
+2026-05-04 08:53:19 [INFO] Telegram Config Loaded. Chat ID: 6711779207
+2026-05-04 08:53:19 [INFO] Claude Screener V3.0.0 dimulai.
+2026-05-04 08:53:19 [INFO] Telegram Config Loaded. Chat ID: 6711779207
+2026-05-04 08:53:19 [INFO] Telegram Config Loaded. Chat ID: 6711779207
+2026-05-04 08:53:19 [INFO] Scanner V3.0.0 dimulai.
+2026-05-04 08:53:19 [INFO] Membaca 'data/data.csv' (Kolom: AADI)
+2026-05-04 08:53:19 [INFO] Total ticker unik: 666
+2026-05-04 08:53:19 [INFO] Membaca 'data/data.csv' kolom 'AADI'. Total ticker unik: 666
+2026-05-04 08:53:19 [INFO] Total saham untuk di-scan: 666
+2026-05-04 08:53:19 [INFO] File blacklist.csv tidak ditemukan. Tidak ada blacklist aktif.
+2026-05-04 08:53:19 [WARNING] File data/bandar_value.csv tidak ditemukan. Filter 2 Bandar tidak dapat dihitung dari yfinance.
+2026-05-04 08:53:19 [INFO] File blacklist.csv tidak ditemukan — tidak ada blacklist aktif.
+2026-05-04 08:53:29 [INFO] HIT: BCIP | Chg: +34.85% | RSI: 69.6 | Score: 4/4 | Value: 57.888B | Bandar: True
+2026-05-04 08:54:32 [ERROR] 
+1 Failed download:
+2026-05-04 08:54:32 [ERROR] ['IMPC.JK']: TypeError("'NoneType' object is not subscriptable")
+2026-05-04 08:56:07 [INFO] Mengirim hasil ke Telegram...
+2026-05-04 08:56:08 [INFO] Pesan Telegram terkirim (1/1).
+2026-05-04 08:56:08 [INFO] Scanner selesai dalam 169.1 detik.
+2026-05-04 08:56:11 [INFO] Mengirim hasil ke Telegram...
+2026-05-04 08:56:12 [INFO] Pesan Telegram terkirim (1/1).
+2026-05-04 08:56:12 [INFO] Scanner selesai dalam 173.0 detik.

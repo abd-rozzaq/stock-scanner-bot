@@ -1,49 +1,28 @@
-# ================================================================
-# screener.py - COMBINED MULTI-SCREENER IDX STOCK SCANNER
-# Version : 3.0.0
-# Author  : Merlin AI Assistant
-# Date    : 2026-04-27
-# Desc    : Scanner saham IDX gabungan 4 set filter:
-#
-# ── FILTER SET ORIGINAL (BSJP V2) ──────────────────────────────
-#   MAIN CRITERIA (semua wajib):
-#     1. Close >= High * 0.98
-#     2. Volume > 1000
-#     3. Volume > Volume MA 5
-#     4. Price Change % >= 3
-#
-#   NOISE FILTERS (scoring, min 3 dari 4):
-#     5. RSI(14) < 80
-#     6. Value >= 1 Miliar
-#     7. Close > MA 20
-#     8. Volume >= 2x Vol MA20
-#
-# ── FILTER SET 1 — BANDAR SCREENER ────────────────────────────
-#     B1. Bandar Value > 1 × Bandar Value MA 20
-#     B2. Value MA 20 > 1.000.000.000
-#     B3. Previous Bandar Value <= 1 × Bandar Value  (akumulasi baru)
-#     B4. Bandar Value MA 10 > 1 × Bandar Value MA 20
-#
-# ── FILTER SET 2 — TREND SCREENER ─────────────────────────────
-#     T1. Price > 1 × Price MA 20
-#     T2. Price > 1 × Price MA 50
-#     T3. Volume >= 2 × Volume MA 20
-#     T4. Value > 1 × Value MA 20
-#
-# ── FILTER SET 3 — LIKUIDITAS SCREENER ────────────────────────
-#     L1. Volume > 2 × Volume MA 20
-#     L2. Value >= 100.000.000 (100 Juta)
-#
-# SUMBER DATA : data/data.csv
-# BLACKLIST   : data/blacklist.csv (opsional)
-# CONFIG      : config.py (TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID)
-# ================================================================
+"""
+Claude Screener V4.1 — Dual Session Edition
+============================================================
+Cara pakai:
+  python screener_v4_dual.py          → auto-detect session by waktu
+  python screener_v4_dual.py sesi1    → paksa mode Sesi 1 (watchlist)
+  python screener_v4_dual.py sesi2    → paksa mode Sesi 2 (konfirmasi)
+
+Flow Dual Session:
+  11:30-12:30 WIB → Sesi 1: tangkap kandidat, simpan ke JSON
+  14:30-14:55 WIB → Sesi 2: konfirmasi, bandingkan dgn Sesi 1
+
+  ⭐ CONFIRMED = muncul di KEDUA sesi → prioritas entry (sinyal terkuat)
+  🆕 NEW       = hanya Sesi 2 → valid, tapi tidak ada konfirmasi Sesi 1
+  ⚠️  DROPPED  = ada di Sesi 1, hilang di Sesi 2 → hindari, kemungkinan
+                 distribusi bandar saat break / harga melemah di sesi 2
+"""
 
 import pandas as pd
 import numpy as np
 import yfinance as yf
 import datetime as dt
 import warnings
+import json
+import sys
 import os
 import logging
 import time
@@ -54,7 +33,7 @@ try:
 except ImportError:
     REQUESTS_AVAILABLE = False
 
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Tuple
 
 warnings.filterwarnings("ignore")
 
@@ -78,56 +57,163 @@ logging.basicConfig(
         logging.StreamHandler()
     ]
 )
-
-logger = logging.getLogger("COMBINED_SCREENER")
+logger = logging.getLogger("DUAL_SCREENER")
 
 # ======================================================
-# 1. CONSTANTS
+# 1. CONSTANTS — BASE (tidak berubah antar sesi)
 # ======================================================
-VERSION = "3.0.0"
+VERSION = "4.1.0"
 
-# ── Original BSJP Thresholds ──
-CLOSE_HIGH_RATIO        = 0.98
-MIN_FREQUENCY           = 1000
-MIN_PRICE_CHANGE_PCT    = 3
-RSI_MAX                 = 80
-MIN_VALUE_IDR           = 1_000_000_000    # 1 Miliar
-VOL_SPIKE_MULTIPLIER    = 2
-MIN_EXTRA_SCORE         = 3
+# ── Market Schedule IDX (WIB) ──────────────────────────
+MARKET_SESI1_OPEN_H  = 9
+MARKET_SESI1_OPEN_M  = 0
+MARKET_SESI1_CLOSE_H = 11
+MARKET_SESI1_CLOSE_M = 30    # Sesi 1: 09:00 - 11:30 → 150 menit
+MARKET_SESI2_OPEN_H  = 13
+MARKET_SESI2_OPEN_M  = 30
+MARKET_SESI2_CLOSE_H = 15
+MARKET_SESI2_CLOSE_M = 0     # Sesi 2: 13:30 - 15:00 → 90 menit
+TOTAL_MARKET_MINUTES = 240.0  # 150 + 90
 
-# ── Bandar Screener Thresholds ──
-BANDAR_VALUE_MA_PERIOD  = 20               # periode MA untuk Bandar Value
-BANDAR_VALUE_MA10_PER   = 10
+# ── Window auto-deteksi sesi (WIB) ────────────────────
+SESI1_WINDOW_START   = dt.time(11, 30)   # setelah Sesi 1 tutup
+SESI1_WINDOW_END     = dt.time(13, 30)   # sebelum Sesi 2 buka
+SESI2_WINDOW_START   = dt.time(13, 30)   # Sesi 2 mulai
+SESI2_WINDOW_END     = dt.time(15, 30)   # buffer 30 menit setelah tutup
+
+# ── Technical Periods ─────────────────────────────────
+RSI_PERIOD          = 14
+MA5_PERIOD          = 5
+MA20_PERIOD         = 20
+MA50_PERIOD         = 50
+CMF_PERIOD          = 14
+OBV_SLOPE_PERIOD    = 5
+AD_SLOPE_PERIOD     = 5
+
+# ── Risk Management ───────────────────────────────────
+TP_PERCENT          = 0.06     # 6% TP
+CL_PERCENT          = 0.05     # 5% CL
+
+# ── Data Fetch ────────────────────────────────────────
+YFINANCE_HIST_PERIOD    = "4mo"    # historical daily (untuk MA50 + buffer)
+YFINANCE_HIST_INTERVAL  = "1d"
+YFINANCE_INTRA_PERIOD   = "1d"     # intraday hari ini
+YFINANCE_INTRA_INTERVAL = "5m"     # resolusi 5 menit
+
+# ── Bandar Screener ───────────────────────────────────
 BANDAR_VALUE_MA20_MIN   = 1_000_000_000    # Value MA20 > 1 Miliar
 
-# ── Trend Screener Thresholds ──
-MA50_PERIOD             = 50
-
-# ── Likuiditas Screener Thresholds ──
+# ── Likuiditas ────────────────────────────────────────
 MIN_VALUE_LIKUIDITAS    = 100_000_000      # 100 Juta
 
-# ── Risk Management ──
-TP_PERCENT              = 0.08
-CL_PERCENT              = 0.05
+# ── Session Data Storage ──────────────────────────────
+SESSION_DATA_DIR    = os.path.join("data", "sessions")
 
-# ── Technical Periods ──
-RSI_PERIOD              = 14
-MA20_PERIOD             = 20
-MA5_PERIOD              = 5
-
-# ── Telegram ──
-MAX_MESSAGE_LENGTH      = 4096
-
-# ── Data Fetch ──
-YFINANCE_PERIOD         = "3mo"            # 3 bulan untuk MA50
-YFINANCE_INTERVAL       = "1d"
+# ── Telegram ─────────────────────────────────────────
+MAX_MESSAGE_LENGTH  = 4096
 
 # ======================================================
-# 2. TELEGRAM CONFIG
+# 2. SESSION PROFILES
+# ── Threshold berbeda per sesi: Sesi 1 lebih longgar
+#    (candle & volume belum final), Sesi 2 pakai V4 penuh
 # ======================================================
-TELEGRAM_OK = False
-TELEGRAM_BOT_TOKEN = ""
-TELEGRAM_CHAT_ID = ""
+SESSION_PROFILES = {
+    "SESI1": {
+        # Label
+        "label":                "SESI 1 — Watchlist Kandidat (11:30–12:30)",
+        "description":          "Filter longgar, tujuan: tangkap kandidat potensial seluas mungkin",
+
+        # M1: Close dekat High — lebih longgar krn candle bisa berubah di sesi 2
+        "close_high_ratio":     0.975,
+
+        # M4: Min kenaikan — lebih rendah krn hari belum selesai
+        "min_price_change_pct": 2.5,
+
+        # M2: Min frekuensi
+        "min_frequency":        1_500,
+
+        # M5: RSI — lebih lebar untuk kandidat
+        "rsi_min":              35,
+        "rsi_max":              75,
+
+        # M7: Candle body — lebih longgar
+        "min_candle_body":      0.25,
+
+        # N1: Min value — lebih rendah
+        "min_value_idr":        1_500_000_000,   # 1.5 Miliar
+
+        # Noise filter — cukup 2/3
+        "min_noise_score":      2,
+
+        # B1: CMF minimum — lebih longgar
+        "cmf_min":              0.02,
+
+        # Anti-pump — lebih longgar (kandidat boleh sedikit sudah naik)
+        "max_prerun_5d":        20.0,
+        "max_prerun_10d":       38.0,
+
+        # Volume projection — Sesi 1 volume belum final, proyeksikan ke full day
+        "use_projected_vol":    True,
+
+        # Vol spike multiplier
+        "vol_spike_mult":       1.5,             # lebih longgar dari 2x
+    },
+
+    "SESI2": {
+        # Label
+        "label":                "SESI 2 — Sinyal Konfirmasi (14:30–14:55)",
+        "description":          "Filter V4 penuh, tujuan: konfirmasi sinyal terkuat sebelum entry",
+
+        # M1: Close dekat High — ketat (V4 original)
+        "close_high_ratio":     0.985,
+
+        # M4: Min kenaikan
+        "min_price_change_pct": 3.0,
+
+        # M2: Min frekuensi
+        "min_frequency":        2_000,
+
+        # M5: RSI — ketat
+        "rsi_min":              40,
+        "rsi_max":              72,
+
+        # M7: Candle body — ketat
+        "min_candle_body":      0.35,
+
+        # N1: Min value — ketat
+        "min_value_idr":        3_000_000_000,   # 3 Miliar
+
+        # Noise filter — semua 3/3 wajib
+        "min_noise_score":      3,
+
+        # B1: CMF minimum — ketat
+        "cmf_min":              0.05,
+
+        # Anti-pump — ketat (V4 original)
+        "max_prerun_5d":        15.0,
+        "max_prerun_10d":       30.0,
+
+        # Volume tidak diproyeksi (hampir final menjelang closing)
+        "use_projected_vol":    False,
+
+        # Vol spike multiplier
+        "vol_spike_mult":       2.0,
+    }
+}
+
+# ── Filter bersama (tidak berubah di kedua sesi) ──────
+SHARED_FILTERS = {
+    "min_price_idr":    50,             # min harga saham (anti penny)
+    "vol_ma20_min":     2.0,            # Volume MA20 multiplier (trend screener)
+    "max_vol_proj_cap": 3.0,            # cap proyeksi volume (max 3x lipat)
+}
+
+# ======================================================
+# 3. TELEGRAM CONFIG
+# ======================================================
+TELEGRAM_OK         = False
+TELEGRAM_BOT_TOKEN  = ""
+TELEGRAM_CHAT_ID    = ""
 
 try:
     from config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
@@ -135,121 +221,90 @@ try:
         TELEGRAM_OK = True
         logger.info(f"Telegram Config Loaded. Chat ID: {TELEGRAM_CHAT_ID}")
     else:
-        logger.warning("Telegram config ditemukan tapi requests tidak tersedia atau token/chat_id kosong.")
+        logger.warning("Telegram config ditemukan tapi token/chat_id kosong.")
 except ImportError:
-    logger.warning("config.py tidak ditemukan. Telegram notifikasi dinonaktifkan.")
+    logger.warning("config.py tidak ditemukan. Telegram dinonaktifkan.")
 except Exception as e:
     logger.warning(f"Error loading config.py: {e}")
 
 # ======================================================
-# 3. TELEGRAM HELPER
+# 4. TELEGRAM HELPERS
 # ======================================================
 def send_telegram_message(message: str) -> bool:
     if not TELEGRAM_OK:
-        logger.info("Telegram tidak aktif, pesan tidak dikirim.")
         return False
-
-    messages_to_send = split_telegram_message(message)
-    all_success = True
-
-    for i, msg_chunk in enumerate(messages_to_send):
+    for i, chunk in enumerate(split_telegram_message(message)):
         try:
-            url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-            data = {
+            url  = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+            resp = requests.post(url, data={
                 "chat_id": TELEGRAM_CHAT_ID,
-                "text": msg_chunk,
+                "text": chunk,
                 "parse_mode": "HTML"
-            }
-            response = requests.post(url, data=data, timeout=15)
-            if response.status_code == 200:
-                logger.info(f"Pesan Telegram terkirim ({i+1}/{len(messages_to_send)}).")
-            else:
-                logger.error(f"Gagal kirim Telegram (Status {response.status_code}): {response.text}")
-                all_success = False
-        except requests.exceptions.Timeout:
-            logger.error("Timeout saat mengirim pesan Telegram.")
-            all_success = False
-        except requests.exceptions.ConnectionError:
-            logger.error("Tidak dapat terhubung ke server Telegram.")
-            all_success = False
+            }, timeout=15)
+            if resp.status_code != 200:
+                logger.error(f"Telegram error {resp.status_code}: {resp.text}")
+                return False
         except Exception as e:
-            logger.error(f"Error koneksi Telegram: {e}")
-            all_success = False
-
-        if len(messages_to_send) > 1 and i < len(messages_to_send) - 1:
+            logger.error(f"Telegram send error: {e}")
+            return False
+        if i > 0:
             time.sleep(1)
-
-    return all_success
+    return True
 
 
 def split_telegram_message(message: str) -> List[str]:
     if len(message) <= MAX_MESSAGE_LENGTH:
         return [message]
-
-    chunks = []
-    current_chunk = ""
-    lines = message.split("\n")
-
-    for line in lines:
-        if len(line) > MAX_MESSAGE_LENGTH:
-            if current_chunk:
-                chunks.append(current_chunk.strip())
-                current_chunk = ""
-            for j in range(0, len(line), MAX_MESSAGE_LENGTH):
-                chunks.append(line[j:j + MAX_MESSAGE_LENGTH])
-            continue
-        test_chunk = current_chunk + line + "\n"
-        if len(test_chunk) > MAX_MESSAGE_LENGTH:
-            chunks.append(current_chunk.strip())
-            current_chunk = line + "\n"
+    chunks, current = [], ""
+    for line in message.split("\n"):
+        test = current + line + "\n"
+        if len(test) > MAX_MESSAGE_LENGTH:
+            if current:
+                chunks.append(current.strip())
+            current = line + "\n"
         else:
-            current_chunk = test_chunk
-
-    if current_chunk.strip():
-        chunks.append(current_chunk.strip())
-
-    return chunks if chunks else [message[:MAX_MESSAGE_LENGTH]]
-
+            current = test
+    if current.strip():
+        chunks.append(current.strip())
+    return chunks or [message[:MAX_MESSAGE_LENGTH]]
 
 # ======================================================
-# 4. DATA HELPERS
+# 5. DATA HELPERS
 # ======================================================
 def load_tickers_from_csv() -> List[str]:
-    file_path = os.path.join("data", "data.csv")
-    if not os.path.exists(file_path):
-        if os.path.exists("data.csv"):
-            file_path = "data.csv"
-        else:
-            logger.error("File data.csv tidak ditemukan di 'data/' maupun root directory.")
-            return []
-    try:
-        df = pd.read_csv(file_path)
-        possible_cols = ['Ticker', 'ticker', 'Kode', 'kode', 'Code', 'code', 'Symbol', 'symbol']
-        found_col = next((c for c in possible_cols if c in df.columns), df.columns[0])
-        logger.info(f"Membaca '{file_path}' (Kolom: {found_col})")
-        tickers = df[found_col].dropna().astype(str).tolist()
-        cleaned = list(set([t.strip().upper() for t in tickers if len(t.strip()) >= 4]))
-        logger.info(f"Total ticker unik: {len(cleaned)}")
-        return sorted(cleaned)
-    except pd.errors.EmptyDataError:
-        logger.error(f"File '{file_path}' kosong.")
-        return []
-    except Exception as e:
-        logger.error(f"Error membaca '{file_path}': {e}")
-        return []
+    for path in [os.path.join("data", "data.csv"), "data.csv"]:
+        if os.path.exists(path):
+            try:
+                df  = pd.read_csv(path)
+                col = next(
+                    (c for c in ['Ticker','ticker','Kode','kode','Code','code','Symbol','symbol']
+                     if c in df.columns),
+                    df.columns[0]
+                )
+                logger.info(f"Membaca '{path}' (kolom: {col})")
+                tickers = df[col].dropna().astype(str).tolist()
+                cleaned = sorted(set(t.strip().upper() for t in tickers if len(t.strip()) >= 4))
+                logger.info(f"Total ticker unik: {len(cleaned)}")
+                return cleaned
+            except Exception as e:
+                logger.error(f"Error membaca '{path}': {e}")
+                return []
+    logger.error("File data.csv tidak ditemukan.")
+    return []
 
 
 def load_blacklist() -> List[str]:
-    file_path = os.path.join("data", "blacklist.csv")
-    if not os.path.exists(file_path):
-        logger.info("File blacklist.csv tidak ditemukan — tidak ada blacklist aktif.")
+    path = os.path.join("data", "blacklist.csv")
+    if not os.path.exists(path):
         return []
     try:
-        df = pd.read_csv(file_path)
-        possible_cols = ['Ticker', 'ticker', 'Kode', 'kode', 'Code', 'code', 'Symbol', 'symbol']
-        found_col = next((c for c in possible_cols if c in df.columns), df.columns[0])
-        tickers = df[found_col].dropna().astype(str).tolist()
-        cleaned = list(set([t.strip().upper() for t in tickers if len(t.strip()) >= 4]))
+        df  = pd.read_csv(path)
+        col = next(
+            (c for c in ['Ticker','ticker','Kode','kode','Code','code','Symbol','symbol']
+             if c in df.columns),
+            df.columns[0]
+        )
+        cleaned = list(set(t.strip().upper() for t in df[col].dropna().astype(str).tolist()))
         logger.info(f"Blacklist aktif: {len(cleaned)} saham")
         return cleaned
     except Exception as e:
@@ -257,555 +312,964 @@ def load_blacklist() -> List[str]:
         return []
 
 
-def fetch_stock_data(ticker: str) -> pd.DataFrame:
+def fetch_stock_data_historical(ticker: str) -> pd.DataFrame:
     """
-    Mengambil data historis saham dari Yahoo Finance.
-    Period diperpanjang ke 3mo agar MA50 bisa dihitung.
+    Ambil data harian historis (4 bulan) dari Yahoo Finance.
+    Digunakan untuk semua kalkulasi MA, CMF, OBV, A/D, RSI, anti-pump.
     """
     try:
         symbol = f"{ticker}.JK" if not ticker.endswith(".JK") else ticker
         df = yf.download(
             symbol,
-            period=YFINANCE_PERIOD,
-            interval=YFINANCE_INTERVAL,
+            period=YFINANCE_HIST_PERIOD,
+            interval=YFINANCE_HIST_INTERVAL,
             progress=False,
             auto_adjust=False
         )
-
         if df.empty:
             return pd.DataFrame()
-
         if isinstance(df.columns, pd.MultiIndex):
-            df.columns = [c[0] if isinstance(c, tuple) else c for c in df.columns]
-
-        required_cols = ["Open", "High", "Low", "Close", "Volume"]
-        if not all(col in df.columns for col in required_cols):
-            logger.warning(f"{ticker}: Kolom data tidak lengkap.")
+            df.columns = [c[0] for c in df.columns]
+        cols = ["Open", "High", "Low", "Close", "Volume"]
+        if not all(c in df.columns for c in cols):
             return pd.DataFrame()
-
-        result = df[required_cols].copy()
-        result.dropna(inplace=True)
-        return result
+        return df[cols].dropna().copy()
     except Exception as e:
-        logger.debug(f"Error fetching {ticker}: {e}")
+        logger.debug(f"Error fetching historical {ticker}: {e}")
         return pd.DataFrame()
 
 
+def get_elapsed_market_minutes(t: dt.time) -> float:
+    """
+    Hitung berapa menit sesi market sudah berjalan hingga waktu t (WIB).
+
+    Jadwal IDX:
+      Sesi 1: 09:00–11:30 (150 menit)
+      Break:  11:30–13:30
+      Sesi 2: 13:30–15:00 (90 menit)
+      Total:  240 menit
+    """
+    h, m = t.hour, t.minute
+    cur    = h * 60 + m
+    s1_o   = MARKET_SESI1_OPEN_H  * 60 + MARKET_SESI1_OPEN_M   # 540
+    s1_c   = MARKET_SESI1_CLOSE_H * 60 + MARKET_SESI1_CLOSE_M  # 690
+    s2_o   = MARKET_SESI2_OPEN_H  * 60 + MARKET_SESI2_OPEN_M   # 810
+    s2_c   = MARKET_SESI2_CLOSE_H * 60 + MARKET_SESI2_CLOSE_M  # 900
+
+    if cur < s1_o:
+        return 0.0
+    elif cur <= s1_c:
+        return float(cur - s1_o)       # dalam sesi 1
+    elif cur < s2_o:
+        return 150.0                    # break — sesi 1 sudah selesai
+    elif cur <= s2_c:
+        return 150.0 + float(cur - s2_o)  # dalam sesi 2
+    else:
+        return TOTAL_MARKET_MINUTES     # setelah market tutup
+
+
+def fetch_intraday_today(ticker: str, use_projection: bool = True) -> Optional[Dict]:
+    """
+    Ambil data intraday hari ini (interval 5 menit) dari Yahoo Finance,
+    lalu agregasikan ke satu bar OHLCV representatif.
+
+    Mengapa intraday (bukan daily)?
+    Ketika screener dijalankan SAAT market berjalan (11:45 atau 14:30),
+    yfinance daily data hanya punya data sampai hari KEMARIN.
+    Untuk sinyal hari ini, kita perlu fetch intraday lalu aggregate.
+
+    Volume Projection (khusus Sesi 1):
+    Saat 11:45 (break), hanya 150/240 menit market yg sudah berjalan.
+    Volume sesungguhnya baru ~62.5% dari total hari.
+    Proyeksi: volume_projected = volume_raw × (240 / 150) = ×1.6
+    Ini agar perbandingan vs volume MA20 (daily) lebih fair.
+
+    Returns dict atau None jika data tidak tersedia.
+    """
+    try:
+        symbol = f"{ticker}.JK" if not ticker.endswith(".JK") else ticker
+        df = yf.download(
+            symbol,
+            period=YFINANCE_INTRA_PERIOD,
+            interval=YFINANCE_INTRA_INTERVAL,
+            progress=False,
+            auto_adjust=False
+        )
+        if df.empty:
+            return None
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = [c[0] for c in df.columns]
+        cols = ["Open", "High", "Low", "Close", "Volume"]
+        if not all(c in df.columns for c in cols):
+            return None
+        df.dropna(subset=["Close", "Volume"], inplace=True)
+        if df.empty or len(df) < 3:
+            return None
+
+        # Aggregasi ke 1 bar
+        today_open   = float(df["Open"].iloc[0])
+        today_high   = float(df["High"].max())
+        today_low    = float(df["Low"].min())
+        today_close  = float(df["Close"].iloc[-1])
+        today_vol    = float(df["Volume"].sum())
+
+        # Volume projection
+        if use_projection:
+            now_time    = dt.datetime.now().time()
+            elapsed_min = get_elapsed_market_minutes(now_time)
+            if elapsed_min > 0:
+                raw_mult = TOTAL_MARKET_MINUTES / elapsed_min
+                mult     = min(raw_mult, SHARED_FILTERS["max_vol_proj_cap"])
+            else:
+                mult = 1.0
+            proj_vol = today_vol * mult
+        else:
+            mult     = 1.0
+            proj_vol = today_vol
+
+        return {
+            "open":             today_open,
+            "high":             today_high,
+            "low":              today_low,
+            "close":            today_close,
+            "volume_raw":       today_vol,
+            "volume":           proj_vol,       # volume yg dipakai untuk filter
+            "vol_multiplier":   round(mult, 2),
+            "bars_count":       len(df),
+            "source":           "INTRADAY",
+        }
+    except Exception as e:
+        logger.debug(f"Error fetching intraday {ticker}: {e}")
+        return None
+
 # ======================================================
-# 5. TECHNICAL INDICATORS
+# 6. TECHNICAL INDICATORS
 # ======================================================
 def calculate_rsi(series: pd.Series, period: int = RSI_PERIOD) -> float:
+    """RSI Wilder's Smoothing (EWM)."""
     try:
         if len(series) < period + 1:
             return -1.0
         delta = series.diff()
-        gain = delta.where(delta > 0, 0.0)
-        loss = (-delta.where(delta < 0, 0.0))
-        avg_gain = gain.ewm(alpha=1.0 / period, min_periods=period, adjust=False).mean()
-        avg_loss = loss.ewm(alpha=1.0 / period, min_periods=period, adjust=False).mean()
-        current_avg_gain = avg_gain.iloc[-1]
-        current_avg_loss = avg_loss.iloc[-1]
-        if current_avg_loss == 0:
-            return 100.0 if current_avg_gain > 0 else 50.0
-        rs = current_avg_gain / current_avg_loss
-        return round(100.0 - (100.0 / (1.0 + rs)), 1)
-    except Exception as e:
-        logger.debug(f"Error menghitung RSI: {e}")
+        gain  = delta.where(delta > 0, 0.0)
+        loss  = (-delta.where(delta < 0, 0.0))
+        ag    = gain.ewm(alpha=1.0/period, min_periods=period, adjust=False).mean()
+        al    = loss.ewm(alpha=1.0/period, min_periods=period, adjust=False).mean()
+        cag, cal = ag.iloc[-1], al.iloc[-1]
+        if cal == 0:
+            return 100.0 if cag > 0 else 50.0
+        return round(100.0 - (100.0 / (1.0 + cag / cal)), 1)
+    except Exception:
         return -1.0
 
 
-def compute_bandar_value(df: pd.DataFrame) -> pd.Series:
+def compute_cmf(df: pd.DataFrame, period: int = CMF_PERIOD) -> pd.Series:
     """
-    Proxy Bandar Value = Close * Volume (nilai transaksi harian).
-    Dalam konteks IDX, "Bandar Value" merepresentasikan net value flow.
-    Jika kamu punya sumber data Bandar Value asli (misal RTI/Stockbit),
-    ganti fungsi ini dengan data tersebut.
+    Chaikin Money Flow — mengukur tekanan beli vs jual berdasarkan
+    posisi close dalam range hari itu (bukan sekadar volume).
+    CMF > 0 = buying pressure / akumulasi.
+    CMF < 0 = selling pressure / distribusi.
     """
-    return df['Close'] * df['Volume']
+    rng  = (df["High"] - df["Low"]).replace(0, np.nan)
+    mfm  = ((df["Close"] - df["Low"]) - (df["High"] - df["Close"])) / rng
+    mfm  = mfm.fillna(0)
+    mfv  = mfm * df["Volume"]
+    vs   = df["Volume"].rolling(period).sum().replace(0, np.nan)
+    cmf  = mfv.rolling(period).sum() / vs
+    return cmf.fillna(0)
 
+
+def compute_obv(df: pd.DataFrame) -> pd.Series:
+    """
+    On-Balance Volume — akumulasi volume berdasarkan arah harga.
+    OBV naik = lebih banyak volume di hari hijau = buying pressure.
+    """
+    direction = np.sign(df["Close"].diff().fillna(0))
+    return (direction * df["Volume"]).cumsum()
+
+
+def compute_ad_line(df: pd.DataFrame) -> pd.Series:
+    """
+    Accumulation/Distribution Line — lebih sensitif dari OBV.
+    Mendeteksi distribusi tersembunyi: harga naik tapi A/D turun
+    = tanda bandar distribusi diam-diam.
+    """
+    rng = (df["High"] - df["Low"]).replace(0, np.nan)
+    clv = ((df["Close"] - df["Low"]) - (df["High"] - df["Close"])) / rng
+    clv = clv.fillna(0)
+    return (clv * df["Volume"]).cumsum()
+
+
+def get_slope_sign(series: pd.Series, lookback: int) -> int:
+    """
+    Cek tren series dalam N periode terakhir via linear regression.
+    Return: +1 (naik), -1 (turun), 0 (tidak cukup data/flat).
+    """
+    if len(series) < lookback + 1:
+        return 0
+    recent = series.iloc[-lookback:].values.astype(float)
+    if np.any(np.isnan(recent)):
+        return 0
+    try:
+        slope = np.polyfit(np.arange(len(recent)), recent, 1)[0]
+        return 1 if slope > 0 else (-1 if slope < 0 else 0)
+    except Exception:
+        return 0
 
 # ======================================================
-# 6. COMBINED SCREENER LOGIC
+# 7. SESSION MANAGEMENT
 # ======================================================
-def analyze_stock(ticker: str) -> Optional[Dict]:
+def detect_session() -> str:
     """
-    Menganalisis satu saham berdasarkan GABUNGAN 4 set filter:
-
-    ── SET ORIGINAL (BSJP V2) ──────────────────────────────────
-      MAIN (semua wajib):
-        cond1: Close >= High * 0.98
-        cond2: Volume > 1000
-        cond3: Volume > Volume MA 5
-        cond4: Price Change % >= 3
-
-      NOISE FILTERS (scoring, min 3/4):
-        cond5: RSI(14) < 80
-        cond6: Value >= 1 Miliar
-        cond7: Close > MA 20
-        cond8: Volume >= 2x Volume MA 20
-
-    ── SET 1 — BANDAR SCREENER ──────────────────────────────────
-        B1: Bandar Value > 1 × Bandar Value MA 20
-        B2: Value MA 20 > 1 Miliar
-        B3: Previous Bandar Value <= 1 × Bandar Value  (akumulasi baru)
-        B4: Bandar Value MA 10 > 1 × Bandar Value MA 20
-
-    ── SET 2 — TREND SCREENER ───────────────────────────────────
-        T1: Price > 1 × Price MA 20
-        T2: Price > 1 × Price MA 50
-        T3: Volume >= 2 × Volume MA 20
-        T4: Value > 1 × Value MA 20
-
-    ── SET 3 — LIKUIDITAS SCREENER ──────────────────────────────
-        L1: Volume > 2 × Volume MA 20
-        L2: Value >= 100 Juta
-
-    Returns dict dengan semua metrik jika lolos SEMUA wajib +
-    gabungan scoring, None jika tidak lolos.
+    Auto-deteksi sesi berdasarkan waktu WIB sekarang.
+    Return: "SESI1" | "SESI2" | "UNKNOWN"
     """
-    df = fetch_stock_data(ticker)
+    now = dt.datetime.now().time()
+    if SESI1_WINDOW_START <= now < SESI1_WINDOW_END:
+        return "SESI1"
+    elif SESI2_WINDOW_START <= now < SESI2_WINDOW_END:
+        return "SESI2"
+    return "UNKNOWN"
 
-    # Butuh minimal 51 data point untuk MA50
-    if df.empty or len(df) < (MA50_PERIOD + 1):
+
+def parse_session_arg() -> str:
+    """
+    Baca argument command line untuk override session.
+    Usage:
+      python screener_v4_dual.py         → auto
+      python screener_v4_dual.py sesi1   → paksa Sesi 1
+      python screener_v4_dual.py sesi2   → paksa Sesi 2
+    """
+    if len(sys.argv) > 1:
+        arg = sys.argv[1].lower().strip()
+        if arg in ("sesi1", "1", "s1"):
+            return "SESI1"
+        if arg in ("sesi2", "2", "s2"):
+            return "SESI2"
+    return detect_session()
+
+
+def get_today_str() -> str:
+    return dt.datetime.now().strftime("%Y%m%d")
+
+
+def save_session1_results(results: List[Dict]) -> bool:
+    """
+    Simpan hasil Sesi 1 ke JSON untuk dibandingkan saat Sesi 2.
+    Path: data/sessions/sesi1_YYYYMMDD.json
+    """
+    os.makedirs(SESSION_DATA_DIR, exist_ok=True)
+    path = os.path.join(SESSION_DATA_DIR, f"sesi1_{get_today_str()}.json")
+    try:
+        payload = {
+            "date":      get_today_str(),
+            "timestamp": dt.datetime.now().isoformat(),
+            "version":   VERSION,
+            "count":     len(results),
+            "tickers":   [r["ticker"] for r in results],
+            "results":   results,
+        }
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False, indent=2)
+        logger.info(f"Sesi 1 tersimpan → {path} ({len(results)} saham)")
+        return True
+    except Exception as e:
+        logger.error(f"Error menyimpan Sesi 1: {e}")
+        return False
+
+
+def load_session1_results() -> Optional[Dict]:
+    """
+    Muat hasil Sesi 1 hari ini.
+    Return None jika tidak ada atau file rusak.
+    """
+    path = os.path.join(SESSION_DATA_DIR, f"sesi1_{get_today_str()}.json")
+    if not os.path.exists(path):
+        logger.warning(f"File Sesi 1 tidak ditemukan: {path}")
+        return None
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        logger.info(f"Sesi 1 dimuat → {len(data.get('results', []))} saham")
+        return data
+    except Exception as e:
+        logger.error(f"Error memuat Sesi 1: {e}")
         return None
 
-    current  = df.iloc[-1]
-    prev     = df.iloc[-2]
 
-    if current['Close'] <= 0 or current['High'] <= 0 or current['Volume'] <= 0:
-        return None
-    if prev['Close'] <= 0:
-        return None
+def compare_sessions(
+    sesi1_tickers: set,
+    sesi2_results: List[Dict]
+) -> Dict:
+    """
+    Bandingkan hasil Sesi 1 dan Sesi 2.
 
-    close       = float(current['Close'])
-    high        = float(current['High'])
-    volume      = float(current['Volume'])
-    prev_close  = float(prev['Close'])
+    Returns dict berisi:
+      confirmed → saham yg muncul di KEDUA sesi (sinyal terkuat)
+      new       → hanya di Sesi 2 (valid tapi belum terkonfirmasi S1)
+      dropped   → ada di Sesi 1, hilang di Sesi 2 (tanda kelemahan)
+    """
+    confirmed   = []
+    new_signals = []
 
-    # ── Derived Series ────────────────────────────────────────
-    value_series        = df['Close'] * df['Volume']          # Value harian (IDR)
-    bandar_series       = compute_bandar_value(df)            # proxy Bandar Value
+    for r in sesi2_results:
+        if r["ticker"] in sesi1_tickers:
+            r["confirmation"] = "CONFIRMED"
+            confirmed.append(r)
+        else:
+            r["confirmation"] = "NEW"
+            new_signals.append(r)
 
-    value_today         = close * volume
-    bandar_today        = float(bandar_series.iloc[-1])
-    bandar_prev         = float(bandar_series.iloc[-2])
+    sesi2_tickers = {r["ticker"] for r in sesi2_results}
+    dropped       = sorted(sesi1_tickers - sesi2_tickers)
 
-    vol_ma5             = df['Volume'].rolling(MA5_PERIOD).mean().iloc[-1]
-    vol_ma20            = df['Volume'].rolling(MA20_PERIOD).mean().iloc[-1]
-    ma20                = df['Close'].rolling(MA20_PERIOD).mean().iloc[-1]
-    ma50                = df['Close'].rolling(MA50_PERIOD).mean().iloc[-1]
-    value_ma20          = value_series.rolling(MA20_PERIOD).mean().iloc[-1]
-    bandar_ma20         = bandar_series.rolling(BANDAR_VALUE_MA_PERIOD).mean().iloc[-1]
-    bandar_ma10         = bandar_series.rolling(BANDAR_VALUE_MA10_PER).mean().iloc[-1]
-
-    price_change_pct    = ((close - prev_close) / prev_close) * 100
-
-    # Validasi MA tidak NaN
-    if any(pd.isna(x) for x in [vol_ma5, vol_ma20, ma20, ma50, value_ma20, bandar_ma20, bandar_ma10]):
-        return None
-
-    # ==========================================================
-    # ORIGINAL BSJP — MAIN CRITERIA (semua wajib)
-    # ==========================================================
-    cond1 = close >= (high * CLOSE_HIGH_RATIO)              # Close dekat High
-    cond2 = volume > MIN_FREQUENCY                          # Volume > 1000
-    cond3 = volume > float(vol_ma5)                         # Volume > Vol MA5
-    cond4 = price_change_pct >= MIN_PRICE_CHANGE_PCT        # Change >= 3%
-
-    if not all([cond1, cond2, cond3, cond4]):
-        return None
-
-    # ==========================================================
-    # ORIGINAL BSJP — NOISE FILTERS (scoring, min 3/4)
-    # ==========================================================
-    rsi_value = calculate_rsi(df['Close'], RSI_PERIOD)
-    cond5 = (rsi_value >= 0) and (rsi_value < RSI_MAX)                        # RSI < 80
-    cond6 = value_today >= MIN_VALUE_IDR                                        # Value >= 1 Miliar
-    cond7 = close > float(ma20)                                                 # Close > MA20
-    cond8 = volume >= (VOL_SPIKE_MULTIPLIER * float(vol_ma20))                  # Volume >= 2× MA20
-
-    extra_score = sum([cond5, cond6, cond7, cond8])
-    if extra_score < MIN_EXTRA_SCORE:
-        return None
-
-    # ==========================================================
-    # SET 1 — BANDAR SCREENER
-    # ==========================================================
-    #   B1: Bandar Value > 1 × Bandar Value MA 20
-    b1 = bandar_today > float(bandar_ma20)
-
-    #   B2: Value MA 20 > 1 Miliar
-    b2 = float(value_ma20) > BANDAR_VALUE_MA20_MIN
-
-    #   B3: Previous Bandar Value <= 1 × Bandar Value (akumulasi baru)
-    #       artinya hari ini Bandar Value naik (baru masuk)
-    b3 = bandar_prev <= bandar_today
-
-    #   B4: Bandar Value MA 10 > 1 × Bandar Value MA 20
-    b4 = float(bandar_ma10) > float(bandar_ma20)
-
-    bandar_pass = all([b1, b2, b3, b4])
-
-    # ==========================================================
-    # SET 2 — TREND SCREENER
-    # ==========================================================
-    #   T1: Price > 1 × Price MA 20
-    t1 = close > float(ma20)
-
-    #   T2: Price > 1 × Price MA 50
-    t2 = close > float(ma50)
-
-    #   T3: Volume >= 2 × Volume MA 20
-    t3 = volume >= (2 * float(vol_ma20))
-
-    #   T4: Value > 1 × Value MA 20
-    t4 = value_today > float(value_ma20)
-
-    trend_pass = all([t1, t2, t3, t4])
-
-    # ==========================================================
-    # SET 3 — LIKUIDITAS SCREENER
-    # ==========================================================
-    #   L1: Volume > 2 × Volume MA 20
-    l1 = volume > (2 * float(vol_ma20))
-
-    #   L2: Value >= 100 Juta
-    l2 = value_today >= MIN_VALUE_LIKUIDITAS
-
-    likuiditas_pass = all([l1, l2])
-
-    # ==========================================================
-    # GABUNGAN — saham harus lolos SEMUA screener tambahan
-    # ==========================================================
-    if not all([bandar_pass, trend_pass, likuiditas_pass]):
-        return None
-
-    # ==========================================================
-    # RISK MANAGEMENT
-    # ==========================================================
-    entry_price = close
-    tp_price    = entry_price * (1 + TP_PERCENT)
-    cl_price    = entry_price * (1 - CL_PERCENT)
-
-    # ==========================================================
-    # BUILD RESULT
-    # ==========================================================
-    result = {
-        "ticker":           ticker,
-        "close":            int(close),
-        "high":             int(high),
-        "low":              int(current['Low']),
-        "open":             int(current['Open']),
-        "change_pct":       round(float(price_change_pct), 2),
-        "volume":           int(volume),
-        "vol_ma5":          int(vol_ma5),
-        "vol_ma20":         int(vol_ma20),
-
-        # Original BSJP
-        "rsi":              rsi_value if rsi_value >= 0 else 0.0,
-        "value_idr":        float(value_today),
-        "value_b":          round(float(value_today) / 1e9, 3),
-        "ma20":             round(float(ma20), 0),
-        "above_ma20":       cond7,
-        "vol_spike":        cond8,
-        "rsi_ok":           cond5,
-        "value_ok":         cond6,
-        "extra_score":      extra_score,
-
-        # Bandar Screener
-        "bandar_value_b":   round(bandar_today / 1e9, 3),
-        "bandar_ma20_b":    round(float(bandar_ma20) / 1e9, 3),
-        "bandar_ma10_b":    round(float(bandar_ma10) / 1e9, 3),
-        "bandar_pass":      bandar_pass,
-        "b1_val_gt_ma20":   b1,
-        "b2_val_ma20_ok":   b2,
-        "b3_akumulasi":     b3,
-        "b4_ma10_gt_ma20":  b4,
-
-        # Trend Screener
-        "ma50":             round(float(ma50), 0),
-        "above_ma50":       t2,
-        "value_ma20_b":     round(float(value_ma20) / 1e9, 3),
-        "trend_pass":       trend_pass,
-
-        # Likuiditas Screener
-        "likuiditas_pass":  likuiditas_pass,
-
-        # Risk Management
-        "entry":            int(entry_price),
-        "tp":               int(tp_price),
-        "cl":               int(cl_price),
-        "status":           "MATCH"
+    return {
+        "confirmed":  confirmed,
+        "new":        new_signals,
+        "dropped":    dropped,
     }
 
-    return result
+# ======================================================
+# 8. CORE ANALYSIS — SESSION-AWARE
+# ======================================================
+def analyze_stock_dual(ticker: str, session: str, cfg: Dict) -> Optional[Dict]:
+    """
+    Analisis satu saham dengan threshold sesuai session profile.
 
+    Alur data:
+    ┌─────────────────────────────────────────────────────┐
+    │  Historical daily (4mo)  →  semua MA, RSI, CMF,    │
+    │                              OBV, A/D, anti-pump    │
+    │                                                     │
+    │  Intraday hari ini (5m)  →  harga & volume terkini  │
+    │  (jika tersedia)            untuk sinyal hari ini   │
+    │                             + proyeksi volume S1    │
+    └─────────────────────────────────────────────────────┘
+
+    Jika intraday tidak tersedia (market tutup, weekend,
+    yfinance gagal), fallback ke bar terakhir historical.
+    """
+    # ── 1. Fetch historical daily ──────────────────────
+    hist = fetch_stock_data_historical(ticker)
+    if hist.empty or len(hist) < 65:
+        return None
+
+    # ── 2. Fetch intraday hari ini ─────────────────────
+    use_proj    = cfg["use_projected_vol"]
+    intra       = fetch_intraday_today(ticker, use_projection=use_proj)
+    using_intra = False
+
+    if intra is not None:
+        # Gunakan data intraday sebagai bar "hari ini"
+        close       = intra["close"]
+        high        = intra["high"]
+        low         = intra["low"]
+        open_price  = intra["open"]
+        volume      = intra["volume"]          # sudah diproyeksikan jika S1
+        vol_raw     = intra["volume_raw"]
+        vol_mult    = intra["vol_multiplier"]
+        prev_close  = float(hist["Close"].iloc[-1])   # close kemarin
+        df_for_ma   = hist                            # MA dihitung dari historical
+        using_intra = True
+        data_note   = (
+            f"INTRADAY ({intra['bars_count']} bars"
+            + (f", proj ×{vol_mult:.2f}" if use_proj and vol_mult > 1.01 else "")
+            + ")"
+        )
+    else:
+        # Fallback: gunakan 2 bar terakhir historical
+        cur         = hist.iloc[-1]
+        prv         = hist.iloc[-2]
+        close       = float(cur["Close"])
+        high        = float(cur["High"])
+        low         = float(cur["Low"])
+        open_price  = float(cur["Open"])
+        volume      = float(cur["Volume"])
+        vol_raw     = volume
+        vol_mult    = 1.0
+        prev_close  = float(prv["Close"])
+        df_for_ma   = hist
+        data_note   = "HISTORICAL_FALLBACK"
+
+    # Validasi data dasar
+    if close <= 0 or high <= 0 or volume <= 0 or prev_close <= 0:
+        return None
+
+    # ── 3. Derived series dari historical ─────────────
+    value_series = df_for_ma["Close"] * df_for_ma["Volume"]
+    value_today  = close * volume
+
+    vol_ma5      = df_for_ma["Volume"].rolling(MA5_PERIOD).mean().iloc[-1]
+    vol_ma20     = df_for_ma["Volume"].rolling(MA20_PERIOD).mean().iloc[-1]
+    ma20         = df_for_ma["Close"].rolling(MA20_PERIOD).mean().iloc[-1]
+    ma50         = df_for_ma["Close"].rolling(MA50_PERIOD).mean().iloc[-1]
+    value_ma20   = value_series.rolling(MA20_PERIOD).mean().iloc[-1]
+
+    if any(pd.isna(x) for x in [vol_ma5, vol_ma20, ma20, ma50, value_ma20]):
+        return None
+
+    price_change_pct = ((close - prev_close) / prev_close) * 100
+
+    # ── 4. Anti-pump lookback ─────────────────────────
+    if len(df_for_ma) < 12:
+        return None
+
+    price_5d_ago  = float(df_for_ma["Close"].iloc[-7])
+    price_10d_ago = float(df_for_ma["Close"].iloc[-12])
+    prior_run_5d  = ((prev_close - price_5d_ago)  / price_5d_ago)  * 100
+    prior_run_10d = ((prev_close - price_10d_ago) / price_10d_ago) * 100
+
+    # ── 5. Indikator Bandar ────────────────────────────
+    cmf_series = compute_cmf(df_for_ma, CMF_PERIOD)
+    obv_series = compute_obv(df_for_ma)
+    ad_series  = compute_ad_line(df_for_ma)
+
+    cmf_value  = float(cmf_series.iloc[-1])
+    obv_slope  = get_slope_sign(obv_series, OBV_SLOPE_PERIOD)
+    ad_slope   = get_slope_sign(ad_series,  AD_SLOPE_PERIOD)
+
+    # RSI dari historical close
+    rsi_value  = calculate_rsi(df_for_ma["Close"], RSI_PERIOD)
+
+    # ── 6. Candle quality ─────────────────────────────
+    candle_range = high - low
+    candle_body  = close - open_price
+    body_ratio   = (candle_body / candle_range) if candle_range > 0 else 0.0
+
+    # ══════════════════════════════════════════════════
+    # MAIN CONDITIONS (semua wajib) — session-aware
+    # ══════════════════════════════════════════════════
+    m1 = close >= (high * cfg["close_high_ratio"])
+    m2 = volume > cfg["min_frequency"]
+    m3 = volume > float(vol_ma5)
+    m4 = price_change_pct >= cfg["min_price_change_pct"]
+    m5 = (rsi_value >= cfg["rsi_min"]) and (rsi_value <= cfg["rsi_max"])
+    m6 = close >= SHARED_FILTERS["min_price_idr"]
+    m7 = (candle_body > 0) and (body_ratio >= cfg["min_candle_body"])
+    m8 = prior_run_5d  <= cfg["max_prerun_5d"]
+    m9 = prior_run_10d <= cfg["max_prerun_10d"]
+
+    if not all([m1, m2, m3, m4, m5, m6, m7, m8, m9]):
+        return None
+
+    # ══════════════════════════════════════════════════
+    # NOISE FILTERS — session-aware scoring
+    # ══════════════════════════════════════════════════
+    vol_mult_for_noise = cfg["vol_spike_mult"]
+    n1 = value_today >= cfg["min_value_idr"]
+    n2 = close > float(ma20)
+    n3 = volume >= (vol_mult_for_noise * float(vol_ma20))
+
+    noise_score = sum([n1, n2, n3])
+    if noise_score < cfg["min_noise_score"]:
+        return None
+
+    # ══════════════════════════════════════════════════
+    # BANDAR SCREENER — CMF + OBV + A/D + Value MA20
+    # ══════════════════════════════════════════════════
+    b1 = cmf_value > cfg["cmf_min"]    # buying pressure aktif
+    b2 = obv_slope > 0                  # OBV tren naik
+    b3 = ad_slope  > 0                  # A/D tren naik (bukan distribusi tersembunyi)
+    b4 = float(value_ma20) > BANDAR_VALUE_MA20_MIN
+
+    if not all([b1, b2, b3, b4]):
+        return None
+
+    # ══════════════════════════════════════════════════
+    # TREND SCREENER
+    # ══════════════════════════════════════════════════
+    t1 = close > float(ma20)
+    t2 = close > float(ma50)
+    t3 = volume >= (SHARED_FILTERS["vol_ma20_min"] * float(vol_ma20))
+    t4 = value_today > float(value_ma20)
+
+    if not all([t1, t2, t3, t4]):
+        return None
+
+    # ══════════════════════════════════════════════════
+    # LIKUIDITAS SCREENER
+    # ══════════════════════════════════════════════════
+    l1 = volume > (2 * float(vol_ma20))
+    l2 = value_today >= MIN_VALUE_LIKUIDITAS
+
+    if not all([l1, l2]):
+        return None
+
+    # ── Risk Management ───────────────────────────────
+    tp = int(close * (1 + TP_PERCENT))
+    cl = int(close * (1 - CL_PERCENT))
+
+    return {
+        "ticker":           ticker,
+        "session":          session,
+        "confirmation":     "-",        # diisi saat compare (Sesi 2)
+        "data_source":      data_note if using_intra else "HIST_FALLBACK",
+
+        "close":            int(close),
+        "high":             int(high),
+        "low":              int(low),
+        "open":             int(open_price),
+        "change_pct":       round(float(price_change_pct), 2),
+        "volume":           int(volume),
+        "vol_raw":          int(vol_raw),
+        "vol_multiplier":   vol_mult,
+        "vol_ma20":         int(vol_ma20),
+
+        "rsi":              rsi_value if rsi_value >= 0 else 0.0,
+
+        "value_b":          round(float(value_today) / 1e9, 3),
+        "value_ma20_b":     round(float(value_ma20) / 1e9, 3),
+        "ma20":             round(float(ma20), 0),
+        "ma50":             round(float(ma50), 0),
+        "above_ma20":       n2,
+        "above_ma50":       t2,
+        "vol_spike":        n3,
+        "value_ok":         n1,
+        "noise_score":      noise_score,
+
+        "prior_run_5d":     round(prior_run_5d, 2),
+        "prior_run_10d":    round(prior_run_10d, 2),
+        "body_ratio":       round(body_ratio, 3),
+
+        "cmf":              round(cmf_value, 4),
+        "obv_slope":        obv_slope,
+        "ad_slope":         ad_slope,
+        "b1_cmf_ok":        b1,
+        "b2_obv_up":        b2,
+        "b3_ad_up":         b3,
+
+        "entry":            int(close),
+        "tp":               tp,
+        "cl":               cl,
+    }
 
 # ======================================================
-# 7. OUTPUT FORMATTERS
+# 9. OUTPUT FORMATTERS
 # ======================================================
-def format_terminal_table(results: List[Dict]) -> str:
+def _confirmation_prefix(r: Dict) -> str:
+    c = r.get("confirmation", "-")
+    if c == "CONFIRMED":
+        return "⭐"
+    elif c == "NEW":
+        return "🆕"
+    return "  "
+
+
+def format_terminal_table(results: List[Dict], show_confirmation: bool = False) -> str:
     if not results:
-        return "Tidak ada hasil."
+        return "  (tidak ada)"
 
+    conf_col = "Conf" if show_confirmation else ""
     header = (
-        f"{'No':>3} | {'Ticker':<6} | {'Close':>7} | {'Chg%':>6} | "
-        f"{'RSI':>5} | {'Val(B)':>7} | {'MA20':>2} | {'MA50':>2} | "
-        f"{'VSpk':>4} | {'Bandar':>6} | {'Score':>5} | "
-        f"{'Entry':>7} | {'TP(8%)':>7} | {'CL(5%)':>7}"
+        f"  {'No':>3} | {'':2}{'Ticker':<6} | {'Close':>7} | {'Chg%':>6} | "
+        f"{'RSI':>5} | {'CMF':>6} | {'Val(B)':>6} | "
+        f"{'5dRun':>6} | {'Body':>5} | "
+        f"{'MA20':>4} | {'MA50':>4} | "
+        f"{'Entry':>7} | {'TP':>7} | {'CL':>7}"
     )
-    separator = "-" * len(header)
-    lines = [separator, header, separator]
+    sep = "  " + "-" * (len(header) - 2)
+    lines = [sep, header, sep]
 
     for i, r in enumerate(results, 1):
-        ma20_icon   = "Y" if r['above_ma20']   else "N"
-        ma50_icon   = "Y" if r['above_ma50']   else "N"
-        vspk_icon   = "Y" if r['vol_spike']     else "N"
-        bandar_icon = "✓" if r['bandar_pass']  else "✗"
-        star = " *" if r['extra_score'] == 4 else ""
-
+        pfx     = _confirmation_prefix(r)
+        ma20_i  = "✓" if r["above_ma20"] else "✗"
+        ma50_i  = "✓" if r["above_ma50"] else "✗"
+        prerun  = f"{r['prior_run_5d']:+.1f}%"
         line = (
-            f"{i:>3} | {r['ticker']:<6} | {r['close']:>7,} | "
+            f"  {i:>3} | {pfx}{r['ticker']:<6} | {r['close']:>7,} | "
             f"{r['change_pct']:>+5.1f}% | {r['rsi']:>5.1f} | "
-            f"{r['value_b']:>6.3f}B | "
-            f"  {ma20_icon:<1} | "
-            f"  {ma50_icon:<1} | "
-            f"  {vspk_icon:<1} | "
-            f"     {bandar_icon:<1} | "
-            f" {r['extra_score']}/4{star} | "
+            f"{r['cmf']:>+6.3f} | {r['value_b']:>5.3f}B | "
+            f"{prerun:>6} | {r['body_ratio']:>5.3f} | "
+            f"   {ma20_i} | "
+            f"   {ma50_i} | "
             f"{r['entry']:>7,} | {r['tp']:>7,} | {r['cl']:>7,}"
         )
         lines.append(line)
 
-    lines.append(separator)
+    lines.append(sep)
     return "\n".join(lines)
 
 
-def format_telegram_message(results: List[Dict], scan_time: str,
-                            total_scanned: int, total_skipped: int,
-                            blacklisted_count: int) -> str:
-    msg_lines = [
-        f"<b>Claude Screener V{VERSION}</b>",
-        f"<i>{scan_time}</i>",
+def format_telegram_sesi1(results: List[Dict], scan_time: str,
+                           total: int, skipped: int,
+                           now_time: dt.time) -> str:
+    elapsed = get_elapsed_market_minutes(now_time)
+    proj_note = ""
+    if elapsed > 0:
+        mult = min(TOTAL_MARKET_MINUTES / elapsed, SHARED_FILTERS["max_vol_proj_cap"])
+        proj_note = f" | Vol proj ×{mult:.2f}"
+
+    lines = [
+        f"<b>📋 Claude Screener V{VERSION} — SESI 1</b>",
+        f"<i>Watchlist Kandidat | {scan_time}{proj_note}</i>",
         "",
-        f"Scanned: {total_scanned} | Blacklisted: {blacklisted_count} | Skipped: {total_skipped}",
-        f"<b>Match: {len(results)} saham</b>",
+        f"Scanned: {total} | Skipped: {skipped}",
+        f"<b>Kandidat: {len(results)} saham</b>",
+        "<i>⚠️ Belum sinyal final — jalankan Sesi 2 pukul 14:30 untuk konfirmasi</i>",
         "━━━━━━━━━━━━━━━━━━━━━━",
     ]
 
     if not results:
-        msg_lines.append("")
-        msg_lines.append("<i>Tidak ada saham yang lolos semua filter.</i>")
-        return "\n".join(msg_lines)
+        lines.append("<i>Tidak ada kandidat ditemukan.</i>")
+        return "\n".join(lines)
 
     for r in results:
-        star        = " ⭐" if r['extra_score'] == 4 else ""
-        ma20_icon   = "✅" if r['above_ma20']  else "❌"
-        ma50_icon   = "✅" if r['above_ma50']  else "❌"
-        vspk_icon   = "✅" if r['vol_spike']   else "❌"
-        bandar_icon = "✅" if r['bandar_pass'] else "❌"
-
-        detail_line = (
-            f"<b>{r['ticker']}</b> | "
-            f"{r['change_pct']:+.2f}% | "
-            f"RSI: {r['rsi']:.0f} | "
-            f"Score: {r['extra_score']}/4{star} | "
-            f"Val: {r['value_b']:.3f}B"
+        ma20_i = "✅" if r["above_ma20"] else "❌"
+        ma50_i = "✅" if r["above_ma50"] else "❌"
+        lines.append(
+            f"<b>{r['ticker']}</b> | {r['change_pct']:+.2f}% | "
+            f"RSI:{r['rsi']:.0f} | CMF:{r['cmf']:+.3f} | Val:{r['value_b']:.3f}B"
         )
-        risk_line = (
-            f"   Entry: {r['entry']:,} → "
-            f"TP: {r['tp']:,} | CL: {r['cl']:,}"
+        lines.append(
+            f"   Entry: {r['entry']:,} → TP:{r['tp']:,} | CL:{r['cl']:,}"
         )
-        filter_line = (
-            f"   MA20: {ma20_icon} MA50: {ma50_icon} "
-            f"VolSpike: {vspk_icon} Bandar: {bandar_icon}"
+        lines.append(
+            f"   MA20:{ma20_i} MA50:{ma50_i} | "
+            f"5dRun:{r['prior_run_5d']:+.1f}% | Body:{r['body_ratio']:.2f}"
         )
-        bandar_detail = (
-            f"   BandarVal: {r['bandar_value_b']:.3f}B "
-            f"(MA20: {r['bandar_ma20_b']:.3f}B | MA10: {r['bandar_ma10_b']:.3f}B)"
+        lines.append("")
+
+    lines.append("━━━━━━━━━━━━━━━━━━━━━━")
+    lines.append(f"<i>TP: +{TP_PERCENT*100:.0f}% | CL: -{CL_PERCENT*100:.0f}%</i>")
+    return "\n".join(lines)
+
+
+def format_telegram_sesi2(
+    confirmed: List[Dict],
+    new: List[Dict],
+    dropped: List[str],
+    scan_time: str,
+    total: int,
+    skipped: int,
+    has_sesi1: bool
+) -> str:
+    lines = [
+        f"<b>🔔 Claude Screener V{VERSION} — SESI 2</b>",
+        f"<i>Sinyal Konfirmasi | {scan_time}</i>",
+        "",
+        f"Scanned: {total} | Skipped: {skipped}",
+        "━━━━━━━━━━━━━━━━━━━━━━",
+    ]
+
+    # ── CONFIRMED ───────────────────────────────
+    if confirmed:
+        lines.append(
+            f"<b>⭐ CONFIRMED — {len(confirmed)} saham</b>"
         )
+        lines.append("<i>Muncul Sesi 1 &amp; Sesi 2 → PRIORITAS ENTRY</i>")
+        lines.append("")
+        for r in confirmed:
+            ma20_i = "✅" if r["above_ma20"] else "❌"
+            ma50_i = "✅" if r["above_ma50"] else "❌"
+            lines.append(
+                f"⭐ <b>{r['ticker']}</b> | {r['change_pct']:+.2f}% | "
+                f"RSI:{r['rsi']:.0f} | CMF:{r['cmf']:+.3f} | Val:{r['value_b']:.3f}B"
+            )
+            lines.append(
+                f"   Entry: {r['entry']:,} → TP:{r['tp']:,} | CL:{r['cl']:,}"
+            )
+            lines.append(
+                f"   MA20:{ma20_i} MA50:{ma50_i} | "
+                f"5dRun:{r['prior_run_5d']:+.1f}% | Body:{r['body_ratio']:.2f}"
+            )
+            cmf_i = "✅" if r["b1_cmf_ok"] else "❌"
+            obv_i = "✅" if r["b2_obv_up"] else "❌"
+            ad_i  = "✅" if r["b3_ad_up"]  else "❌"
+            lines.append(f"   Bandar: CMF{cmf_i} OBV{obv_i} AD{ad_i}")
+            lines.append("")
+    else:
+        lines.append("⭐ <b>CONFIRMED: tidak ada</b>")
+        lines.append("")
 
-        msg_lines.extend([detail_line, risk_line, filter_line, bandar_detail, ""])
+    # ── NEW ─────────────────────────────────────
+    if new:
+        lines.append(f"<b>🆕 NEW — {len(new)} saham</b>")
+        lines.append("<i>Hanya muncul Sesi 2 — valid, tapi lebih hati-hati</i>")
+        lines.append("")
+        for r in new:
+            lines.append(
+                f"🆕 <b>{r['ticker']}</b> | {r['change_pct']:+.2f}% | "
+                f"RSI:{r['rsi']:.0f} | CMF:{r['cmf']:+.3f} | Val:{r['value_b']:.3f}B"
+            )
+            lines.append(
+                f"   Entry: {r['entry']:,} → TP:{r['tp']:,} | CL:{r['cl']:,}"
+            )
+            lines.append("")
+    else:
+        lines.append("🆕 <b>NEW: tidak ada</b>")
+        lines.append("")
 
-    avg_rsi     = sum(r['rsi'] for r in results) / len(results)
-    avg_change  = sum(r['change_pct'] for r in results) / len(results)
-    total_value = sum(r['value_b'] for r in results)
-    perfect     = sum(1 for r in results if r['extra_score'] == 4)
+    # ── DROPPED ─────────────────────────────────
+    if has_sesi1:
+        lines.append("━━━━━━━━━━━━━━━━━━━━━━")
+        if dropped:
+            lines.append(
+                f"<b>⚠️ DROPPED dari Sesi 1 ({len(dropped)} saham)</b>"
+            )
+            lines.append(
+                "<i>Ada di Sesi 1, hilang di Sesi 2 → "
+                "melemah/terdistribusi, hindari entry</i>"
+            )
+            lines.append(", ".join(dropped))
+        else:
+            lines.append("⚠️ <b>DROPPED: tidak ada</b>")
+            lines.append("<i>Semua kandidat Sesi 1 masih terkonfirmasi</i>")
+        lines.append("")
 
-    msg_lines.append("━━━━━━━━━━━━━━━━━━━━━━")
-    msg_lines.append("<b>SUMMARY</b>")
-    msg_lines.append(f"Avg RSI: {avg_rsi:.1f} | Avg Chg: {avg_change:+.2f}%")
-    msg_lines.append(f"Total Value: {total_value:.3f}B IDR")
-    if perfect > 0:
-        msg_lines.append(f"⭐ Perfect Score (4/4): {perfect} saham")
-    msg_lines.append("")
-    msg_lines.append(f"<i>TP: +{TP_PERCENT*100:.0f}% | CL: -{CL_PERCENT*100:.0f}%</i>")
-
-    return "\n".join(msg_lines)
+    lines.append("━━━━━━━━━━━━━━━━━━━━━━")
+    lines.append(f"<i>TP: +{TP_PERCENT*100:.0f}% | CL: -{CL_PERCENT*100:.0f}%</i>")
+    return "\n".join(lines)
 
 
-def print_summary_stats(results: List[Dict], total_scanned: int,
-                        total_skipped: int, blacklisted_count: int):
-    print("\n" + "=" * 70)
-    print("RINGKASAN STATISTIK — COMBINED SCREENER")
-    print("=" * 70)
-    print(f"  Total Saham di-scan    : {total_scanned}")
-    print(f"  Blacklisted (skip)     : {blacklisted_count}")
-    print(f"  Gagal fetch / skip     : {total_skipped}")
-    print(f"  Total MATCH            : {len(results)}")
-    print("-" * 50)
+def print_sesi1_results(results: List[Dict], total: int, skipped: int,
+                         blacklisted: int, elapsed_sec: float,
+                         now_time: dt.time):
+    elapsed_mkt = get_elapsed_market_minutes(now_time)
+    proj_mult   = min(TOTAL_MARKET_MINUTES / elapsed_mkt,
+                      SHARED_FILTERS["max_vol_proj_cap"]) if elapsed_mkt > 0 else 1.0
+
+    print(f"\n{'='*78}")
+    print(f"  📋 SESI 1 — WATCHLIST KANDIDAT")
+    print(f"  Scanned: {total} | Blacklisted: {blacklisted} | Skipped: {skipped}")
+    print(f"  Market elapsed: {elapsed_mkt:.0f}/{TOTAL_MARKET_MINUTES:.0f} menit"
+          f" | Vol projection: ×{proj_mult:.2f}")
+    print(f"  Kandidat ditemukan: {len(results)} saham")
+    print(f"{'='*78}")
 
     if results:
-        avg_rsi         = sum(r['rsi'] for r in results) / len(results)
-        avg_change      = sum(r['change_pct'] for r in results) / len(results)
-        max_change      = max(r['change_pct'] for r in results)
-        min_change      = min(r['change_pct'] for r in results)
-        total_value     = sum(r['value_b'] for r in results)
-        perfect_count   = sum(1 for r in results if r['extra_score'] == 4)
-        score3_count    = sum(1 for r in results if r['extra_score'] == 3)
-
-        print(f"  Rata-rata RSI          : {avg_rsi:.1f}")
-        print(f"  Rata-rata Change %     : {avg_change:+.2f}%")
-        print(f"  Change tertinggi       : {max_change:+.2f}%")
-        print(f"  Change terendah        : {min_change:+.2f}%")
-        print(f"  Total Value (Miliar)   : {total_value:.3f}B IDR")
-        print(f"  Score 4/4 (Perfect)    : {perfect_count} saham")
-        print(f"  Score 3/4              : {score3_count} saham")
-
-        print(f"\n  Filter Breakdown (dari {len(results)} match):")
-        print(f"    Bandar Pass          : {sum(1 for r in results if r['bandar_pass'])}")
-        print(f"    Trend Pass           : {sum(1 for r in results if r['trend_pass'])}")
-        print(f"    Likuiditas Pass      : {sum(1 for r in results if r['likuiditas_pass'])}")
-        print(f"    Above MA20           : {sum(1 for r in results if r['above_ma20'])}")
-        print(f"    Above MA50           : {sum(1 for r in results if r['above_ma50'])}")
+        print(format_terminal_table(results, show_confirmation=False))
     else:
-        print("  Tidak ada saham yang lolos filter.")
+        print("\n  (Tidak ada kandidat ditemukan dengan filter Sesi 1)")
+        print("  Normal — filter masih cukup ketat meski lebih longgar dari Sesi 2.")
 
-    print("=" * 70)
+    print(f"\n{'='*78}")
+    print(f"  ⏱  Selesai dalam {elapsed_sec:.1f} detik")
+    print(f"  💾 Hasil disimpan → data/sessions/sesi1_{get_today_str()}.json")
+    print(f"  ⏳ Jalankan SESI 2 pukul 14:30–14:55 WIB untuk konfirmasi")
+    print(f"{'='*78}\n")
 
+
+def print_sesi2_results(comparison: Dict, total: int, skipped: int,
+                         blacklisted: int, elapsed_sec: float,
+                         has_sesi1: bool):
+    confirmed = comparison["confirmed"]
+    new       = comparison["new"]
+    dropped   = comparison["dropped"]
+    all_s2    = confirmed + new
+
+    print(f"\n{'='*78}")
+    print(f"  🔔 SESI 2 — SINYAL KONFIRMASI")
+    print(f"  Scanned: {total} | Blacklisted: {blacklisted} | Skipped: {skipped}")
+    print(f"  Total sinyal Sesi 2: {len(all_s2)} saham")
+    if has_sesi1:
+        print(f"  ⭐ CONFIRMED (Sesi 1 + Sesi 2): {len(confirmed)} saham")
+        print(f"  🆕 NEW (hanya Sesi 2)          : {len(new)} saham")
+        print(f"  ⚠️  DROPPED (S1 hilang di S2)  : {len(dropped)} saham")
+    print(f"{'='*78}")
+
+    if confirmed:
+        print(f"\n  ⭐ CONFIRMED — PRIORITAS ENTRY (muncul di kedua sesi)")
+        print(format_terminal_table(confirmed, show_confirmation=True))
+
+    if new:
+        print(f"\n  🆕 NEW — Sinyal Baru Sesi 2 (perlu lebih hati-hati)")
+        print(format_terminal_table(new, show_confirmation=True))
+
+    if not confirmed and not new:
+        print("\n  (Tidak ada sinyal yang lolos filter Sesi 2)")
+
+    if has_sesi1 and dropped:
+        print(f"\n  ⚠️  DROPPED — ada di Sesi 1, HILANG di Sesi 2 (hindari entry):")
+        print(f"  {'  '.join(dropped)}")
+        print(f"  → Kemungkinan: harga melemah sesi 2, distribusi bandar saat break,")
+        print(f"    atau volume tidak terkonfirmasi. Jangan kejar saham ini.")
+
+    print(f"\n{'='*78}")
+    print(f"  ⏱  Selesai dalam {elapsed_sec:.1f} detik")
+    print(f"{'='*78}\n")
 
 # ======================================================
-# 8. MAIN EXECUTION
+# 10. MAIN — DUAL SESSION SCANNER
 # ======================================================
-def run_scanner():
-    """
-    Fungsi utama: Combined Multi-Screener IDX.
-    Flow:
-      1. Load tickers dari CSV
-      2. Load blacklist (opsional)
-      3. Scan setiap saham (Original + Bandar + Trend + Likuiditas)
-      4. Format dan tampilkan hasil di terminal
-      5. Kirim notifikasi ke Telegram
-    """
-    scan_start      = dt.datetime.now()
-    scan_time_str   = scan_start.strftime("%Y-%m-%d %H:%M:%S")
+def run_scanner_dual():
+    scan_start   = dt.datetime.now()
+    scan_time    = scan_start.strftime("%Y-%m-%d %H:%M:%S")
+    now_time     = scan_start.time()
 
+    # ── Deteksi / baca session mode ───────────────────
+    session = parse_session_arg()
+
+    # Handle UNKNOWN (di luar jam)
+    if session == "UNKNOWN":
+        now_str = scan_start.strftime("%H:%M")
+        print(f"\n⚠️  Waktu sekarang ({now_str} WIB) di luar window sesi yang diketahui.")
+        print(f"   Sesi 1 window: {SESI1_WINDOW_START.strftime('%H:%M')} – "
+              f"{SESI1_WINDOW_END.strftime('%H:%M')} WIB")
+        print(f"   Sesi 2 window: {SESI2_WINDOW_START.strftime('%H:%M')} – "
+              f"{SESI2_WINDOW_END.strftime('%H:%M')} WIB")
+        print(f"\n   Override manual:")
+        print(f"   python screener_v4_dual.py sesi1   (paksa Sesi 1)")
+        print(f"   python screener_v4_dual.py sesi2   (paksa Sesi 2)")
+        return
+
+    cfg = SESSION_PROFILES[session]
+
+    # ── Header ────────────────────────────────────────
     print()
-    print("=" * 70)
-    print(f"  CLaude SCREENER V{VERSION}")
-    print(f"  Filter: BSJP Original + Bandar + Trend + Likuiditas")
-    print(f"  {scan_time_str}")
-    print("=" * 70)
-    logger.info(f"Claude Screener V{VERSION} dimulai.")
+    print("=" * 78)
+    print(f"  Claude Screener V{VERSION} — Dual Session Edition")
+    print(f"  Mode: {cfg['label']}")
+    print(f"  {scan_time}")
+    print("=" * 78)
+    print(f"\n  {cfg['description']}")
+    print(f"\n  Threshold aktif:")
+    print(f"    Close/High   : ≥ {cfg['close_high_ratio']}")
+    print(f"    RSI          : {cfg['rsi_min']}–{cfg['rsi_max']}")
+    print(f"    Min Value    : {cfg['min_value_idr']/1e9:.1f} Miliar IDR")
+    print(f"    CMF min      : {cfg['cmf_min']:+.2f}")
+    print(f"    Candle body  : ≥ {cfg['min_candle_body']}")
+    print(f"    Noise filter : {cfg['min_noise_score']}/3 wajib")
+    print(f"    Anti-pump    : 5d ≤ {cfg['max_prerun_5d']}%, 10d ≤ {cfg['max_prerun_10d']}%")
+    print(f"    Vol proj     : {'Ya' if cfg['use_projected_vol'] else 'Tidak'}")
+
+    if session == "SESI1":
+        elapsed_mkt = get_elapsed_market_minutes(now_time)
+        if elapsed_mkt > 0:
+            mult = min(TOTAL_MARKET_MINUTES / elapsed_mkt,
+                       SHARED_FILTERS["max_vol_proj_cap"])
+            print(f"    Vol mult     : ×{mult:.2f} "
+                  f"({elapsed_mkt:.0f}/{TOTAL_MARKET_MINUTES:.0f} menit elapsed)")
     print()
 
-    # 1. Load Tickers
+    logger.info(f"Screener V{VERSION} mode={session} dimulai.")
+
+    # ── Load Sesi 1 data (hanya untuk Sesi 2) ────────
+    sesi1_data    = None
+    sesi1_tickers = set()
+    has_sesi1     = False
+
+    if session == "SESI2":
+        sesi1_data = load_session1_results()
+        if sesi1_data:
+            sesi1_tickers = set(sesi1_data.get("tickers", []))
+            has_sesi1     = True
+            ts_s1 = sesi1_data.get("timestamp", "?")
+            print(f"  📂 Data Sesi 1 dimuat: {len(sesi1_tickers)} kandidat"
+                  f" (disimpan {ts_s1[:16]})")
+            print(f"  Kandidat Sesi 1: {', '.join(sorted(sesi1_tickers))}")
+        else:
+            print("  ℹ️  Data Sesi 1 tidak ditemukan — Sesi 2 berjalan tanpa perbandingan")
+            print("       (semua sinyal akan ditandai 🆕 NEW)")
+        print()
+
+    # ── Load Tickers ──────────────────────────────────
     tickers = load_tickers_from_csv()
     if not tickers:
-        logger.error("Tidak ada saham untuk di-scan. Pastikan data/data.csv tersedia.")
+        logger.error("Tidak ada saham untuk di-scan.")
         return
 
     total_scanned = len(tickers)
-    logger.info(f"Total saham untuk di-scan: {total_scanned}")
 
-    # 2. Load Blacklist
-    blacklist           = load_blacklist()
-    blacklisted_count   = 0
-
+    # ── Load Blacklist ────────────────────────────────
+    blacklist         = load_blacklist()
+    blacklisted_count = 0
     if blacklist:
-        original_count      = len(tickers)
-        tickers             = [t for t in tickers if t not in blacklist]
-        blacklisted_count   = original_count - len(tickers)
-        if blacklisted_count > 0:
-            logger.info(f"{blacklisted_count} saham dilewati karena blacklist.")
+        orig    = len(tickers)
+        tickers = [t for t in tickers if t not in blacklist]
+        blacklisted_count = orig - len(tickers)
+        if blacklisted_count:
+            logger.info(f"{blacklisted_count} saham di-skip (blacklist)")
 
-    # 3. Scan
+    # ── Scanning ─────────────────────────────────────
     results = []
     skipped = 0
-
-    print(f"\nMemulai scanning {len(tickers)} saham...\n")
-    print("  [Filter aktif: BSJP Original + Bandar + Trend + Likuiditas]\n")
+    print(f"  Memulai scanning {len(tickers)} saham...\n")
 
     for i, ticker in enumerate(tickers):
-        progress_pct = ((i + 1) / len(tickers)) * 100
-        print(f"\r  [{progress_pct:5.1f}%] Scanning {i+1}/{len(tickers)}: {ticker:<6}", end="", flush=True)
+        pct = (i + 1) / len(tickers) * 100
+        print(f"\r  [{pct:5.1f}%] {i+1}/{len(tickers)}: {ticker:<6}", end="", flush=True)
 
         try:
-            res = analyze_stock(ticker)
+            res = analyze_stock_dual(ticker, session, cfg)
             if res:
-                logger.info(
-                    f"HIT: {ticker} | Chg: {res['change_pct']:+.2f}% | "
-                    f"RSI: {res['rsi']:.1f} | Score: {res['extra_score']}/4 | "
-                    f"Value: {res['value_b']:.3f}B | Bandar: {res['bandar_pass']}"
-                )
+                # Pre-label untuk Sesi 2 (kalau ada data S1)
+                if session == "SESI2" and has_sesi1:
+                    res["confirmation"] = (
+                        "CONFIRMED" if ticker in sesi1_tickers else "NEW"
+                    )
+                conf_str = f" [{res.get('confirmation','-')}]" if session == "SESI2" else ""
                 print(
-                    f"\n  ✅ HIT: {ticker} "
-                    f"(+{res['change_pct']:.2f}%, RSI:{res['rsi']:.0f}, "
-                    f"Score:{res['extra_score']}/4, Bandar:{'✓' if res['bandar_pass'] else '✗'})"
+                    f"\n  ✅ HIT: {ticker}{conf_str} "
+                    f"({res['change_pct']:+.2f}%, RSI:{res['rsi']:.0f}, "
+                    f"CMF:{res['cmf']:+.3f}, Body:{res['body_ratio']:.2f})"
+                )
+                logger.info(
+                    f"HIT[{session}]: {ticker}{conf_str} | "
+                    f"Chg:{res['change_pct']:+.2f}% | RSI:{res['rsi']:.1f} | "
+                    f"CMF:{res['cmf']:+.3f} | Val:{res['value_b']:.3f}B | "
+                    f"5dRun:{res['prior_run_5d']:+.1f}%"
                 )
                 results.append(res)
         except KeyboardInterrupt:
-            print("\n\n⚠️ Scanner dihentikan oleh user.")
-            logger.warning("Scanner dihentikan oleh user (KeyboardInterrupt).")
+            print("\n\n⚠️  Scanner dihentikan.")
             break
         except Exception as e:
-            logger.debug(f"Error scanning {ticker}: {e}")
+            logger.debug(f"Error {ticker}: {e}")
             skipped += 1
-            continue
 
-    print("\r" + " " * 70 + "\r", end="")
+    print("\r" + " " * 78 + "\r", end="")
 
-    # 4. Sort: extra_score DESC, change_pct DESC
-    results.sort(key=lambda x: (-x['extra_score'], -x['change_pct']))
+    # ── Sort: CONFIRMED dulu, lalu CMF DESC ──────────
+    def sort_key(r):
+        conf_order = 0 if r.get("confirmation") == "CONFIRMED" else 1
+        return (conf_order, -r["cmf"], -r["change_pct"])
 
-    # 5. Terminal Output
-    print(f"\n{'='*70}")
-    print(f"  SCAN SELESAI — Ditemukan: {len(results)} saham")
-    print(f"{'='*70}")
+    results.sort(key=sort_key)
 
-    if results:
-        table_output = format_terminal_table(results)
-        print(f"\n{table_output}")
+    elapsed_sec = (dt.datetime.now() - scan_start).total_seconds()
 
-    print_summary_stats(results, total_scanned, skipped, blacklisted_count)
+    # ══════════════════════════════════════════════════
+    # OUTPUT per sesi
+    # ══════════════════════════════════════════════════
+    if session == "SESI1":
+        # ── Sesi 1: simpan + tampilkan watchlist ──────
+        print_sesi1_results(results, total_scanned, skipped,
+                             blacklisted_count, elapsed_sec, now_time)
+        save_session1_results(results)
 
-    # 6. Telegram
-    if TELEGRAM_OK:
-        logger.info("Mengirim hasil ke Telegram...")
-        telegram_msg = format_telegram_message(
-            results=results,
-            scan_time=scan_time_str,
-            total_scanned=total_scanned,
-            total_skipped=skipped,
-            blacklisted_count=blacklisted_count
-        )
-        success = send_telegram_message(telegram_msg)
-        if success:
-            print("\n✅ Hasil terkirim ke Telegram.")
-        else:
-            print("\n❌ Gagal mengirim ke Telegram.")
+        if TELEGRAM_OK:
+            tg_msg = format_telegram_sesi1(
+                results, scan_time, total_scanned, skipped, now_time
+            )
+            ok = send_telegram_message(tg_msg)
+            print("✅ Telegram terkirim." if ok else "❌ Telegram gagal.")
+
     else:
-        print("\nℹ️  Telegram tidak dikonfigurasi. Hasil hanya ditampilkan di terminal.")
+        # ── Sesi 2: bandingkan + tampilkan konfirmasi ─
+        comparison = compare_sessions(sesi1_tickers, results)
+        print_sesi2_results(
+            comparison, total_scanned, skipped,
+            blacklisted_count, elapsed_sec, has_sesi1
+        )
 
-    # 7. Timing
-    elapsed = (dt.datetime.now() - scan_start).total_seconds()
-    logger.info(f"Scanner selesai dalam {elapsed:.1f} detik.")
-    print(f"\n⏱️  Waktu eksekusi: {elapsed:.1f} detik")
-    print()
+        if TELEGRAM_OK:
+            tg_msg = format_telegram_sesi2(
+                comparison["confirmed"],
+                comparison["new"],
+                comparison["dropped"],
+                scan_time,
+                total_scanned,
+                skipped,
+                has_sesi1
+            )
+            ok = send_telegram_message(tg_msg)
+            print("✅ Telegram terkirim." if ok else "❌ Telegram gagal.")
 
+    logger.info(f"Scanner selesai ({elapsed_sec:.1f}s)")
+    print(f"⏱  Total waktu: {elapsed_sec:.1f} detik\n")
 
 # ======================================================
-# 9. ENTRY POINT
+# 11. ENTRY POINT
 # ======================================================
 if __name__ == "__main__":
-    run_scanner()
+    run_scanner_dual()

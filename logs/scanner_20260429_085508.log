@@ -1,0 +1,27 @@
+2026-04-29 08:55:08 [INFO] Telegram Config Loaded. Chat ID: 6711779207
+2026-04-29 08:55:08 [INFO] Telegram Config Loaded. Chat ID: 6711779207
+2026-04-29 08:55:08 [INFO] Claude Screener V3.0.0 dimulai.
+2026-04-29 08:55:08 [INFO] Scanner V3.0.0 dimulai.
+2026-04-29 08:55:08 [INFO] Membaca 'data/data.csv' (Kolom: AADI)
+2026-04-29 08:55:08 [INFO] Membaca 'data/data.csv' kolom 'AADI'. Total ticker unik: 666
+2026-04-29 08:55:08 [INFO] Total ticker unik: 666
+2026-04-29 08:55:08 [INFO] Total saham untuk di-scan: 666
+2026-04-29 08:55:08 [INFO] File blacklist.csv tidak ditemukan — tidak ada blacklist aktif.
+2026-04-29 08:55:08 [INFO] File blacklist.csv tidak ditemukan. Tidak ada blacklist aktif.
+2026-04-29 08:55:08 [WARNING] File data/bandar_value.csv tidak ditemukan. Filter 2 Bandar tidak dapat dihitung dari yfinance.
+2026-04-29 08:55:08 [INFO] Telegram Config Loaded. Chat ID: 6711779207
+2026-04-29 08:55:16 [INFO] HIT: BDKR | Chg: +4.14% | RSI: 68.3 | Score: 4/4 | Value: 11.414B | Bandar: True
+2026-04-29 08:55:21 [INFO] HIT: BOBA | Chg: +22.90% | RSI: 73.9 | Score: 4/4 | Value: 10.384B | Bandar: True
+2026-04-29 08:55:33 [INFO] HIT: DSNG | Chg: +4.24% | RSI: 64.0 | Score: 4/4 | Value: 59.583B | Bandar: True
+2026-04-29 08:55:38 [INFO] HIT: GDST | Chg: +34.95% | RSI: 84.5 | Score: 3/4 | Value: 41.074B | Bandar: True
+2026-04-29 08:56:28 [INFO] HIT: MIDI | Chg: +6.13% | RSI: 66.5 | Score: 4/4 | Value: 18.768B | Bandar: True
+2026-04-29 08:57:03 [INFO] Mengirim hasil ke Telegram...
+2026-04-29 08:57:04 [INFO] Pesan Telegram terkirim (1/1).
+2026-04-29 08:57:04 [INFO] Scanner selesai dalam 116.6 detik.
+2026-04-29 08:57:12 [INFO] HIT: TOOL | Chg: +34.29% | RSI: 79.1 | Score: 4/4 | Value: 104.095B | Bandar: True
+2026-04-29 08:57:14 [INFO] HIT: ULTJ | Chg: +4.64% | RSI: 69.0 | Score: 4/4 | Value: 19.797B | Bandar: True
+2026-04-29 08:57:14 [INFO] HIT: UVCR | Chg: +5.85% | RSI: 79.6 | Score: 4/4 | Value: 8.992B | Bandar: True
+2026-04-29 08:57:17 [INFO] HIT: WINS | Chg: +5.77% | RSI: 62.8 | Score: 4/4 | Value: 5.339B | Bandar: True
+2026-04-29 08:57:17 [INFO] Mengirim hasil ke Telegram...
+2026-04-29 08:57:18 [INFO] Pesan Telegram terkirim (1/1).
+2026-04-29 08:57:18 [INFO] Scanner selesai dalam 130.5 detik.

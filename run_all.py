@@ -3,7 +3,6 @@ import subprocess
 files = [
     "scanner_gemini.py",
     "scanner_claude.py",
-    "scanner_chatgpt.py",
     "scanner_grok.py"
 ]
 

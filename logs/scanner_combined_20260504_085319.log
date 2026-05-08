@@ -1,0 +1,10 @@
+2026-05-04 08:53:19 [INFO] Telegram Config Loaded. Chat ID: 6711779207
+2026-05-04 08:53:19 [INFO] Scanner BSJP Combined V2.1.0 dimulai.
+2026-05-04 08:53:19 [INFO] Membaca 'data/data.csv' (Kolom: AADI)
+2026-05-04 08:53:19 [INFO] Total ticker unik: 666
+2026-05-04 08:53:19 [INFO] File blacklist.csv tidak ditemukan.
+2026-05-04 08:53:26 [INFO] HIT: BCIP | Chg: +34.85% | RSI: 69.6 | Score: 4/4 | Value: 57.89B
+2026-05-04 08:53:57 [INFO] HIT: FWCT | Chg: +34.83% | RSI: 62.0 | Score: 4/4 | Value: 26.86B
+2026-05-04 08:54:40 [INFO] HIT: LTLS | Chg: +8.33% | RSI: 60.6 | Score: 4/4 | Value: 1.76B
+2026-05-04 08:56:11 [INFO] Pesan Telegram terkirim (1/1).
+2026-05-04 08:56:11 [INFO] Scanner selesai dalam 172.5 detik.
