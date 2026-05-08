@@ -8,6 +8,7 @@ import logging
 import time
 import json
 import argparse
+import requests  # DIPINDAH KE ATAS
 from pathlib import Path
 from typing import Optional, Dict, List
 
@@ -21,15 +22,15 @@ CANDIDATES_DIR = "candidates"
 os.makedirs(LOG_DIR, exist_ok=True)
 os.makedirs(CANDIDATES_DIR, exist_ok=True)
 
-log_filename = os.path.join(LOG_DIR, f"scanner_v2.2.1_{dt.datetime.now().strftime('%Y%m%d_%H%M%S')}.log")
+log_filename = os.path.join(LOG_DIR, f"scanner_v2.2.2_{dt.datetime.now().strftime('%Y%m%d_%H%M%S')}.log")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s",
                     handlers=[logging.FileHandler(log_filename, encoding="utf-8"), logging.StreamHandler()])
-logger = logging.getLogger("GROK_SCANNER_V2.2.1")
+logger = logging.getLogger("GROK_SCANNER_V2.2.2")
 
 # ======================================================
-# 1. CONSTANTS - V2.2.1 (ANTI-NOISE + DUAL SESSION)
+# 1. CONSTANTS - V2.2.2
 # ======================================================
-VERSION = "2.2.1"
+VERSION = "2.2.2"
 
 CLOSE_HIGH_RATIO = 0.99
 MIN_PRICE_CHANGE_PCT = 4.0
@@ -68,27 +69,22 @@ YFINANCE_PERIOD = "3mo"
 YFINANCE_INTERVAL = "1d"
 
 # ======================================================
-# JSON SANITIZER (FIX BUG UTAMA)
+# JSON SANITIZER - FIXED untuk NumPy 2.x
 # ======================================================
 def make_json_serializable(obj):
-    """Convert numpy types & bool ke native Python"""
-    if isinstance(obj, (np.bool_, np.bool8)):
-        return bool(obj)
-    if isinstance(obj, (np.integer, np.int_, np.intc, np.intp, np.int8,
-                        np.int16, np.int32, np.int64)):
-        return int(obj)
-    if isinstance(obj, (np.floating, np.float_, np.float16, np.float32, np.float64)):
-        return float(obj)
+    """Convert semua numpy type ke Python native (fix np.bool8 error)"""
+    if isinstance(obj, np.generic):
+        return obj.item()                     # Handles bool_, int, float, dll.
     if isinstance(obj, dict):
         return {k: make_json_serializable(v) for k, v in obj.items()}
-    if isinstance(obj, list):
+    if isinstance(obj, (list, tuple)):
         return [make_json_serializable(i) for i in obj]
-    if isinstance(obj, tuple):
-        return tuple(make_json_serializable(i) for i in obj)
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
     return obj
 
 # ======================================================
-# TELEGRAM FULL (di-copy dari kode asli kamu)
+# TELEGRAM FULL
 # ======================================================
 def send_telegram_message(message: str) -> bool:
     if not TELEGRAM_OK:
@@ -131,7 +127,7 @@ def split_telegram_message(message: str) -> List[str]:
     return chunks if chunks else [message[:MAX_MESSAGE_LENGTH]]
 
 # ======================================================
-# DATA HELPERS (sama)
+# DATA HELPERS
 # ======================================================
 def load_tickers_from_csv() -> List[str]:
     file_path = os.path.join("data", "data.csv")
@@ -152,7 +148,7 @@ def get_candidates_file(date_str: str, session: str) -> Path:
     return Path(CANDIDATES_DIR) / f"candidates_{date_str}_{session}.json"
 
 # ======================================================
-# FETCH + INDICATORS (sama)
+# FETCH + RSI
 # ======================================================
 def fetch_stock_data(ticker: str) -> pd.DataFrame:
     try:
@@ -189,7 +185,7 @@ def calculate_rsi(series: pd.Series, period: int = RSI_PERIOD) -> float:
         return -1.0
 
 # ======================================================
-# ANALYZE STOCK (dengan explicit bool())
+# ANALYZE STOCK
 # ======================================================
 def analyze_stock(ticker: str) -> Optional[Dict]:
     df = fetch_stock_data(ticker)
@@ -254,16 +250,19 @@ def analyze_stock(ticker: str) -> Optional[Dict]:
     }
 
 # ======================================================
-# SAVE CANDIDATES (pakai sanitizer)
+# SAVE CANDIDATES
 # ======================================================
 def save_candidates(date_str: str, session: str, results: List[Dict]):
-    file = get_candidates_file(date_str, session)
-    data = {
-        "tickers": [r["ticker"] for r in results],
-        "full": [make_json_serializable(r) for r in results]
-    }
-    file.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-    logger.info(f"💾 Saved {len(results)} candidates for {session} on {date_str}")
+    try:
+        file = get_candidates_file(date_str, session)
+        data = {
+            "tickers": [r["ticker"] for r in results],
+            "full": [make_json_serializable(r) for r in results]
+        }
+        file.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+        logger.info(f"💾 Saved {len(results)} candidates for {session} on {date_str}")
+    except Exception as e:
+        logger.error(f"Error saving candidates: {e}")
 
 # ======================================================
 # RUN SCANNER
@@ -291,10 +290,13 @@ def run_scanner(session: str = "eod"):
     if session == "sore":
         siang_file = get_candidates_file(date_str, "siang")
         if siang_file.exists():
-            siang_data = json.loads(siang_file.read_text(encoding="utf-8"))
-            siang_tickers = set(siang_data["tickers"])
-            confirmed = [r for r in results if r["ticker"] in siang_tickers]
-            logger.info(f"✅ CONFIRMED siang + sore: {len(confirmed)} saham")
+            try:
+                siang_data = json.loads(siang_file.read_text(encoding="utf-8"))
+                siang_tickers = set(siang_data["tickers"])
+                confirmed = [r for r in results if r["ticker"] in siang_tickers]
+                logger.info(f"✅ CONFIRMED siang + sore: {len(confirmed)} saham")
+            except Exception as e:
+                logger.error(f"Error load siang candidates: {e}")
 
     if session in ["siang", "sore"]:
         save_candidates(date_str, session, results)
@@ -311,7 +313,7 @@ def run_scanner(session: str = "eod"):
     else:
         print("❌ Tidak ada sinyal CONFIRMED hari ini.")
 
-    # Telegram hanya kirim CONFIRMED
+    # Telegram hanya CONFIRMED
     if TELEGRAM_OK and confirmed:
         msg = f"<b>GROK SCREENER V{VERSION} — {session.upper()} CONFIRMED</b>\n{scan_time_str}\n\n"
         for r in confirmed[:15]:
@@ -325,8 +327,7 @@ def run_scanner(session: str = "eod"):
 # MAIN
 # ======================================================
 if __name__ == "__main__":
-    import requests  # dipindah ke sini agar tidak error kalau import gagal
-    parser = argparse.ArgumentParser(description="GROK SCREENER V2.2.1")
+    parser = argparse.ArgumentParser(description="GROK SCREENER V2.2.2")
     parser.add_argument("--session", choices=["siang", "sore", "eod"], default="eod")
     args = parser.parse_args()
     run_scanner(session=args.session)
