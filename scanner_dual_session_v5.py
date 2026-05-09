@@ -417,7 +417,7 @@ def main():
 
         if confirmed:
             header = (
-                f"<b>🔔 Dual Session Signal v{VERSION}</b>\n"
+                f"<b>Deepseek Screener - 🔔 Dual Session Signal v{VERSION}</b>\n"
                 f"{len(confirmed)} saham lolos konfirmasi ganda:\n\n"
             )
             body = "\n".join(

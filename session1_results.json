@@ -1,0 +1,13 @@
+[
+  {
+    "ticker": "KRYA",
+    "close": 85,
+    "rsi": 64.2,
+    "value_b": 16.39,
+    "adx": 26.6,
+    "entry": 85,
+    "tp": 90,
+    "cl": 80,
+    "source": "intraday"
+  }
+]

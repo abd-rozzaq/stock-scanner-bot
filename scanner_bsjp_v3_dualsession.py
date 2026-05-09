@@ -467,7 +467,7 @@ def get_current_session() -> Tuple[int, dt.datetime]:
 def format_telegram_message(results: List[ScanResult], scan_time: str, 
                            total_scanned: int, session_label: str) -> str:
     lines = [
-        f"<b>🤖 BSJP V3 Dual-Session Scanner</b>",
+        f"<b>Kimi Scanner</b>",
         f"<i>{scan_time} | {session_label}</i>",
         "",
         f"📊 Scanned: {total_scanned} | <b>✅ Match: {len(results)} saham</b>",

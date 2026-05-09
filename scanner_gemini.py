@@ -264,7 +264,7 @@ def run_scanner():
         print("  Data telah disimpan. Silakan jalankan Mode 2 nanti sore.")
         print("="*60)
         
-        telegram_msg = f"<b>[Sesi Siang] Kandidat Pantau:</b>\n" + ", ".join(current_tickers) if current_tickers else "<i>Sesi Siang: Tidak ada kandidat lolos filter.</i>"
+        telegram_msg = f"<b>Gemini Screener Kandidat Pantau - Sesi Siang:</b>\n" + ", ".join(current_tickers) if current_tickers else "<i>Sesi Siang: Tidak ada kandidat lolos filter.</i>"
         
         for r in results:
             print(f"[{r['ticker']}] Chg: +{r['change_pct']}% | Val: {r['value_b']}B | RSI: {r['rsi']}")
@@ -282,7 +282,7 @@ def run_scanner():
             print(f"  HASIL FINAL (Lolos Dual-Session) — Ditemukan {len(final_results)} saham mantap.")
         
         print("="*60)
-        telegram_msg = f"<b>🚀 HASIL FINAL DUAL-SESSION 🚀</b>\n\n"
+        telegram_msg = f"<b>Gemini Screener - HASIL FINAL DUAL-SESSION</b>\n\n"
         if final_results:
             for r in final_results:
                 print(f"⭐ MATCH FINAL: [{r['ticker']}] Entry: {r['entry']} | TP: {r['tp']} (+6%) | CL: {r['cl']} (-5%)")

@@ -1,0 +1,22 @@
+{
+  "tickers": [
+    "MAPI"
+  ],
+  "full": [
+    {
+      "ticker": "MAPI",
+      "close": 1455,
+      "change_pct": 12.36,
+      "rsi": 64.7,
+      "value_b": 168.56,
+      "ma20": 1287.0,
+      "ma50": 1244.0,
+      "vol_spike": true,
+      "extra_score": 4,
+      "entry": 1455,
+      "tp": 1542,
+      "cl": 1382,
+      "status": "MATCH"
+    }
+  ]
+}

@@ -560,7 +560,7 @@ def format_telegram_message(df: pd.DataFrame, session: str, total_scanned: int, 
         note = "Ini hasil sore mentah, belum diintersect dengan sesi siang."
 
     lines = [
-        f"<b>BSJP Scanner V{VERSION}</b>",
+        f"<b>ChatGPT Screener</b>",
         f"<b>{title}</b>",
         f"<i>{now}</i>",
         "",
