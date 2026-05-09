@@ -1,7 +1,6 @@
 import subprocess
 
 files = [
-    "scanner_gemini.py",
     "screener_v4_dual.py",
     "scanner_bsjp_v3_dual.py --mode midday",
     "scanner_bsjp_v3_dualsession.py --mode session1",
