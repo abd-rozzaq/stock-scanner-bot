@@ -198,11 +198,29 @@ def fetch_historical(ticker, start_date, end_date):
 def fetch_intraday(ticker, start_date, end_date):
     """
     Ambil data intraday 5 menit untuk seluruh periode backtest.
-    yfinance membatasi 60 hari untuk data 5m, jadi kita fetch per chunk.
+    yfinance membatasi data 5m hanya untuk 60 hari terakhir.
+    Chunk yang dimulai sebelum batas 60 hari otomatis di-clamp / di-skip.
     """
     symbol = f"{ticker}.JK" if not ticker.endswith(".JK") else ticker
+
+    # Batas keras yfinance: data 5m hanya tersedia 60 hari ke belakang
+    earliest_allowed = dt.date.today() - dt.timedelta(days=58)
+
+    # Jika seluruh periode sudah di luar jangkauan, skip langsung
+    if end_date < earliest_allowed:
+        logger.debug(f"{ticker}: periode {start_date}-{end_date} di luar batas 60 hari yfinance, skip.")
+        return pd.DataFrame()
+
+    # Clamp agar tidak meminta data yang pasti gagal
+    effective_start = max(start_date, earliest_allowed)
+
+    # Suppress semua log ERROR/WARNING dari yfinance (noise "possibly delisted")
+    yf_logger = logging.getLogger("yfinance")
+    prev_level = yf_logger.level
+    yf_logger.setLevel(logging.CRITICAL)
+
     all_chunks = []
-    chunk_start = start_date
+    chunk_start = effective_start
     while chunk_start < end_date:
         chunk_end = min(chunk_start + dt.timedelta(days=55), end_date)
         try:
@@ -222,6 +240,8 @@ def fetch_intraday(ticker, start_date, end_date):
             logger.debug(f"Error fetch intraday chunk {ticker} {chunk_start}: {e}")
         chunk_start = chunk_end + dt.timedelta(days=1)
         time.sleep(0.3)
+
+    yf_logger.setLevel(prev_level)
 
     if not all_chunks:
         return pd.DataFrame()
