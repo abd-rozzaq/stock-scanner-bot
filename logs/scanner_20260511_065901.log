@@ -1,0 +1,56 @@
+2026-05-11 06:59:01,979 [INFO] Total ticker: 666
+2026-05-11 06:59:01,979 [INFO] === Memulai Sesi 1 (Siang ~12:00 WIB) (cutoff UTC 05:00:00) ===
+2026-05-11 06:59:20,636 [ERROR] $FASW.JK: possibly delisted; no price data found  (period=60d)
+2026-05-11 06:59:20,639 [ERROR] 
+1 Failed download:
+2026-05-11 06:59:20,640 [ERROR] ['FASW.JK']: possibly delisted; no price data found  (period=60d)
+2026-05-11 06:59:25,560 [ERROR] $HITS.JK: possibly delisted; no price data found  (period=60d)
+2026-05-11 06:59:25,560 [ERROR] 
+1 Failed download:
+2026-05-11 06:59:25,560 [ERROR] ['HITS.JK']: possibly delisted; no price data found  (period=60d)
+2026-05-11 06:59:31,709 [ERROR] $KIAS.JK: possibly delisted; no price data found  (period=60d)
+2026-05-11 06:59:31,718 [ERROR] 
+1 Failed download:
+2026-05-11 06:59:31,718 [ERROR] ['KIAS.JK']: possibly delisted; no price data found  (period=60d)
+2026-05-11 06:59:34,736 [ERROR] $LMSH.JK: possibly delisted; no price data found  (period=60d)
+2026-05-11 06:59:34,738 [ERROR] 
+1 Failed download:
+2026-05-11 06:59:34,738 [ERROR] ['LMSH.JK']: possibly delisted; no price data found  (period=60d)
+2026-05-11 06:59:37,611 [ERROR] $MENN.JK: possibly delisted; no price data found  (period=60d)
+2026-05-11 06:59:37,620 [ERROR] 
+1 Failed download:
+2026-05-11 06:59:37,620 [ERROR] ['MENN.JK']: possibly delisted; no price data found  (period=60d)
+2026-05-11 06:59:37,892 [ERROR] $MFMI.JK: possibly delisted; no price data found  (period=60d)
+2026-05-11 06:59:37,898 [ERROR] 
+1 Failed download:
+2026-05-11 06:59:37,899 [ERROR] ['MFMI.JK']: possibly delisted; no price data found  (period=60d)
+2026-05-11 06:59:41,171 [ERROR] $MTPS.JK: possibly delisted; no price data found  (period=60d)
+2026-05-11 06:59:41,175 [ERROR] 
+1 Failed download:
+2026-05-11 06:59:41,175 [ERROR] ['MTPS.JK']: possibly delisted; no price data found  (period=60d)
+2026-05-11 06:59:41,246 [ERROR] $MTSM.JK: possibly delisted; no price data found  (period=60d)
+2026-05-11 06:59:41,250 [ERROR] 
+1 Failed download:
+2026-05-11 06:59:41,250 [ERROR] ['MTSM.JK']: possibly delisted; no price data found  (period=60d)
+2026-05-11 06:59:46,205 [ERROR] $PLIN.JK: possibly delisted; no price data found  (period=60d)
+2026-05-11 06:59:46,209 [ERROR] 
+1 Failed download:
+2026-05-11 06:59:46,209 [ERROR] ['PLIN.JK']: possibly delisted; no price data found  (period=60d)
+2026-05-11 06:59:48,583 [ERROR] $PTMR.JK: possibly delisted; no price data found  (period=60d)
+2026-05-11 06:59:48,586 [ERROR] 
+1 Failed download:
+2026-05-11 06:59:48,586 [ERROR] ['PTMR.JK']: possibly delisted; no price data found  (period=60d)
+2026-05-11 06:59:54,045 [ERROR] $SMCB.JK: possibly delisted; no price data found  (period=60d)
+2026-05-11 06:59:54,045 [ERROR] 
+1 Failed download:
+2026-05-11 06:59:54,046 [ERROR] ['SMCB.JK']: possibly delisted; no price data found  (period=60d)
+2026-05-11 06:59:56,455 [ERROR] $SUPR.JK: possibly delisted; no price data found  (period=60d)
+2026-05-11 06:59:56,462 [ERROR] 
+1 Failed download:
+2026-05-11 06:59:56,462 [ERROR] ['SUPR.JK']: possibly delisted; no price data found  (period=60d)
+2026-05-11 06:59:57,971 [ERROR] $TGUK.JK: possibly delisted; no price data found  (period=60d)
+2026-05-11 06:59:57,976 [ERROR] 
+1 Failed download:
+2026-05-11 06:59:57,976 [ERROR] ['TGUK.JK']: possibly delisted; no price data found  (period=60d)
+2026-05-11 07:00:03,574 [INFO] Sesi 1 (Siang ~12:00 WIB) selesai: 0 kandidat dari 666 saham
+2026-05-11 07:00:03,574 [INFO] Tidak ada kandidat di Sesi 1.

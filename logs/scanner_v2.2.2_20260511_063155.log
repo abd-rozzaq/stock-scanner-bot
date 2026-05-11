@@ -1,0 +1,7 @@
+2026-05-11 06:31:55,880 [INFO] ✅ Telegram ready
+2026-05-11 06:31:55,881 [INFO] 🚀 GROK SCANNER V2.2.2 — SESSION: SIANG | 2026-05-11 06:31:55
+2026-05-11 06:31:55,889 [INFO] Loaded 666 tickers
+2026-05-11 06:31:56,026 [ERROR] 
+1 Failed download:
+2026-05-11 06:31:56,026 [ERROR] ['AALI.JK']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-05-11 06:32:59,351 [INFO] 💾 Saved 0 candidates for siang on 2026-05-11

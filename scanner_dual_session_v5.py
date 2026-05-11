@@ -401,10 +401,10 @@ def main():
             )
         else:
             logger.info("Tidak ada kandidat di Sesi 1.")
-            send_telegram("ℹ️ Sesi 1: Tidak ada kandidat ditemukan hari ini.")
+            send_telegram("Deepseek Sesi 1: Tidak ada kandidat ditemukan hari ini.")
 
     else:  # session2
-        matches_s2 = run_session("Sesi 2 (Sore ~15:45 WIB)", tickers, cutoff)
+        matches_s2 = run_session("Deepseek Sesi 2 (Sore ~15:45 WIB)", tickers, cutoff)
         matches_s1 = load_session1()
 
         if not matches_s1:

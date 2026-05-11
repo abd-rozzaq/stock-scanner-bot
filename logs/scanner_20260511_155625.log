@@ -1,0 +1,107 @@
+2026-05-11 08:56:25 [INFO] Telegram Config Loaded. Chat ID: -6711779207
+2026-05-11 08:56:25 [INFO] Screener V4.1.0 mode=SESI2 dimulai.
+2026-05-11 08:56:25 [INFO] Sesi 1 dimuat → 0 saham
+2026-05-11 08:56:25 [INFO] Membaca 'data/data.csv' (kolom: AADI)
+2026-05-11 08:56:25 [INFO] Total ticker unik: 666
+2026-05-11 08:56:29 [ERROR] $AKKU.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:56:29 [ERROR] 
+1 Failed download:
+2026-05-11 08:56:29 [ERROR] ['AKKU.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:56:45 [ERROR] $BIKE.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:56:45 [ERROR] 
+1 Failed download:
+2026-05-11 08:56:45 [ERROR] ['BIKE.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:57:28 [ERROR] $EDGE.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:57:28 [ERROR] 
+1 Failed download:
+2026-05-11 08:57:28 [ERROR] ['EDGE.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:57:36 [ERROR] $FASW.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:57:36 [ERROR] 
+1 Failed download:
+2026-05-11 08:57:36 [ERROR] ['FASW.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:57:53 [ERROR] $HITS.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:57:53 [ERROR] 
+1 Failed download:
+2026-05-11 08:57:53 [ERROR] ['HITS.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:57:56 [ERROR] $IBST.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:57:56 [ERROR] 
+1 Failed download:
+2026-05-11 08:57:56 [ERROR] ['IBST.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:57:58 [ERROR] $IIKP.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:57:58 [ERROR] 
+1 Failed download:
+2026-05-11 08:57:58 [ERROR] ['IIKP.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:58:05 [ERROR] $INPP.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:58:05 [ERROR] 
+1 Failed download:
+2026-05-11 08:58:05 [ERROR] ['INPP.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:58:25 [ERROR] $KIAS.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:58:25 [ERROR] 
+1 Failed download:
+2026-05-11 08:58:25 [ERROR] ['KIAS.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:58:40 [ERROR] $LMSH.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:58:40 [ERROR] 
+1 Failed download:
+2026-05-11 08:58:40 [ERROR] ['LMSH.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:58:50 [ERROR] $MENN.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:58:50 [ERROR] 
+1 Failed download:
+2026-05-11 08:58:50 [ERROR] ['MENN.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:58:51 [ERROR] $META.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:58:51 [ERROR] 
+1 Failed download:
+2026-05-11 08:58:51 [ERROR] ['META.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:58:53 [ERROR] $MFMI.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:58:53 [ERROR] 
+1 Failed download:
+2026-05-11 08:58:53 [ERROR] ['MFMI.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:59:03 [ERROR] $MPRO.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:59:03 [ERROR] 
+1 Failed download:
+2026-05-11 08:59:03 [ERROR] ['MPRO.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:59:04 [ERROR] $MSIE.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:59:04 [ERROR] 
+1 Failed download:
+2026-05-11 08:59:04 [ERROR] ['MSIE.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:59:07 [ERROR] $MTPS.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:59:07 [ERROR] 
+1 Failed download:
+2026-05-11 08:59:07 [ERROR] ['MTPS.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:59:07 [ERROR] $MTSM.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:59:07 [ERROR] 
+1 Failed download:
+2026-05-11 08:59:07 [ERROR] ['MTSM.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:59:34 [ERROR] $PLIN.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:59:34 [ERROR] 
+1 Failed download:
+2026-05-11 08:59:34 [ERROR] ['PLIN.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:59:48 [ERROR] $PTMR.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:59:48 [ERROR] 
+1 Failed download:
+2026-05-11 08:59:48 [ERROR] ['PTMR.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:59:52 [ERROR] $RAFI.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 08:59:52 [ERROR] 
+1 Failed download:
+2026-05-11 08:59:52 [ERROR] ['RAFI.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 09:00:04 [ERROR] $SCPI.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 09:00:04 [ERROR] 
+1 Failed download:
+2026-05-11 09:00:04 [ERROR] ['SCPI.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 09:00:10 [ERROR] $SMCB.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 09:00:10 [ERROR] 
+1 Failed download:
+2026-05-11 09:00:10 [ERROR] ['SMCB.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 09:00:24 [ERROR] $SUPR.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 09:00:24 [ERROR] 
+1 Failed download:
+2026-05-11 09:00:24 [ERROR] ['SUPR.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 09:00:27 [ERROR] $TFCO.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 09:00:27 [ERROR] 
+1 Failed download:
+2026-05-11 09:00:27 [ERROR] ['TFCO.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 09:00:27 [ERROR] $TGUK.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 09:00:27 [ERROR] 
+1 Failed download:
+2026-05-11 09:00:27 [ERROR] ['TGUK.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 09:00:55 [ERROR] Telegram error 400: {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+2026-05-11 09:00:55 [INFO] Scanner selesai (269.5s)

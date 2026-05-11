@@ -1,0 +1,126 @@
+2026-05-11 06:04:28 [INFO] Telegram Config Loaded. Chat ID: 6711779207
+2026-05-11 06:04:28 [INFO] Screener V4.1.0 mode=SESI1 dimulai.
+2026-05-11 06:04:28 [INFO] Membaca 'data/data.csv' (kolom: AADI)
+2026-05-11 06:04:28 [INFO] Total ticker unik: 666
+2026-05-11 06:04:31 [ERROR] $AKKU.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:04:31 [ERROR] 
+1 Failed download:
+2026-05-11 06:04:31 [ERROR] ['AKKU.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:04:38 [ERROR] $BIKE.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:04:38 [ERROR] 
+1 Failed download:
+2026-05-11 06:04:38 [ERROR] ['BIKE.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:04:39 [ERROR] $BLTZ.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:04:39 [ERROR] 
+1 Failed download:
+2026-05-11 06:04:39 [ERROR] ['BLTZ.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:04:48 [ERROR] $CTBN.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:04:48 [ERROR] 
+1 Failed download:
+2026-05-11 06:04:48 [ERROR] ['CTBN.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:04:53 [ERROR] $EDGE.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:04:53 [ERROR] 
+1 Failed download:
+2026-05-11 06:04:53 [ERROR] ['EDGE.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:04:55 [ERROR] $FASW.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:04:55 [ERROR] 
+1 Failed download:
+2026-05-11 06:04:55 [ERROR] ['FASW.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:03 [ERROR] $HITS.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:03 [ERROR] 
+1 Failed download:
+2026-05-11 06:05:03 [ERROR] ['HITS.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:04 [ERROR] $IBST.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:04 [ERROR] 
+1 Failed download:
+2026-05-11 06:05:04 [ERROR] ['IBST.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:05 [ERROR] $IIKP.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:05 [ERROR] 
+1 Failed download:
+2026-05-11 06:05:05 [ERROR] ['IIKP.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:07 [ERROR] $INPP.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:07 [ERROR] 
+1 Failed download:
+2026-05-11 06:05:07 [ERROR] ['INPP.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:13 [ERROR] $KIAS.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:13 [ERROR] 
+1 Failed download:
+2026-05-11 06:05:13 [ERROR] ['KIAS.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:18 [ERROR] $LFLO.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:18 [ERROR] 
+1 Failed download:
+2026-05-11 06:05:18 [ERROR] ['LFLO.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:19 [ERROR] $LMSH.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:19 [ERROR] 
+1 Failed download:
+2026-05-11 06:05:19 [ERROR] ['LMSH.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:23 [ERROR] $MENN.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:23 [ERROR] 
+1 Failed download:
+2026-05-11 06:05:23 [ERROR] ['MENN.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:23 [ERROR] $META.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:23 [ERROR] 
+1 Failed download:
+2026-05-11 06:05:23 [ERROR] ['META.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:23 [ERROR] $MFMI.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:23 [ERROR] 
+1 Failed download:
+2026-05-11 06:05:23 [ERROR] ['MFMI.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:27 [ERROR] $MPRO.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:27 [ERROR] 
+1 Failed download:
+2026-05-11 06:05:27 [ERROR] ['MPRO.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:27 [ERROR] $MSIE.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:27 [ERROR] 
+1 Failed download:
+2026-05-11 06:05:27 [ERROR] ['MSIE.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:28 [ERROR] $MTPS.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:28 [ERROR] 
+1 Failed download:
+2026-05-11 06:05:28 [ERROR] ['MTPS.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:28 [ERROR] $MTSM.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:28 [ERROR] 
+1 Failed download:
+2026-05-11 06:05:28 [ERROR] ['MTSM.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:36 [ERROR] $PLIN.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:36 [ERROR] 
+1 Failed download:
+2026-05-11 06:05:36 [ERROR] ['PLIN.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:39 [ERROR] $PTMR.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:39 [ERROR] 
+1 Failed download:
+2026-05-11 06:05:39 [ERROR] ['PTMR.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:40 [ERROR] $RAFI.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:40 [ERROR] 
+1 Failed download:
+2026-05-11 06:05:40 [ERROR] ['RAFI.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:41 [ERROR] $RDTX.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:41 [ERROR] 
+1 Failed download:
+2026-05-11 06:05:41 [ERROR] ['RDTX.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:44 [ERROR] $SCPI.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:44 [ERROR] 
+1 Failed download:
+2026-05-11 06:05:44 [ERROR] ['SCPI.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:46 [ERROR] $SMCB.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:46 [ERROR] 
+1 Failed download:
+2026-05-11 06:05:46 [ERROR] ['SMCB.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:50 [ERROR] $SUPR.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:50 [ERROR] 
+1 Failed download:
+2026-05-11 06:05:50 [ERROR] ['SUPR.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:52 [ERROR] $TFCO.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:52 [ERROR] 
+1 Failed download:
+2026-05-11 06:05:52 [ERROR] ['TFCO.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:52 [ERROR] $TGKA.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:52 [ERROR] 
+1 Failed download:
+2026-05-11 06:05:52 [ERROR] ['TGKA.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:52 [ERROR] $TGUK.JK: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:05:52 [ERROR] 
+1 Failed download:
+2026-05-11 06:05:52 [ERROR] ['TGUK.JK']: possibly delisted; no price data found  (period=1d)
+2026-05-11 06:06:00 [INFO] Sesi 1 tersimpan → data/sessions/sesi1_20260511.json (0 saham)
+2026-05-11 06:06:00 [INFO] Scanner selesai (91.3s)

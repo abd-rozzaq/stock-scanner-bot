@@ -1,0 +1,78 @@
+2026-05-11 09:03:25 [INFO] Telegram config loaded.
+2026-05-11 09:03:25 [INFO] Loaded 666 tickers from data/data.csv
+2026-05-11 09:03:32 [ERROR] $AKKU.JK: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:03:32 [ERROR] 
+1 Failed download:
+2026-05-11 09:03:32 [ERROR] ['AKKU.JK']: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:03:53 [ERROR] $BIKE.JK: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:03:53 [ERROR] 
+1 Failed download:
+2026-05-11 09:03:53 [ERROR] ['BIKE.JK']: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:04:32 [ERROR] $EDGE.JK: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:04:32 [ERROR] 
+1 Failed download:
+2026-05-11 09:04:32 [ERROR] ['EDGE.JK']: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:04:39 [ERROR] $FASW.JK: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:04:39 [ERROR] 
+1 Failed download:
+2026-05-11 09:04:39 [ERROR] ['FASW.JK']: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:05:04 [ERROR] $HITS.JK: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:05:04 [ERROR] 
+1 Failed download:
+2026-05-11 09:05:04 [ERROR] ['HITS.JK']: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:05:07 [ERROR] $IBST.JK: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:05:07 [ERROR] 
+1 Failed download:
+2026-05-11 09:05:07 [ERROR] ['IBST.JK']: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:05:28 [ERROR] $KIAS.JK: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:05:28 [ERROR] 
+1 Failed download:
+2026-05-11 09:05:28 [ERROR] ['KIAS.JK']: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:05:37 [ERROR] $LMSH.JK: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:05:37 [ERROR] 
+1 Failed download:
+2026-05-11 09:05:37 [ERROR] ['LMSH.JK']: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:05:53 [ERROR] $MENN.JK: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:05:53 [ERROR] 
+1 Failed download:
+2026-05-11 09:05:53 [ERROR] ['MENN.JK']: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:05:55 [ERROR] $MFMI.JK: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:05:55 [ERROR] 
+1 Failed download:
+2026-05-11 09:05:55 [ERROR] ['MFMI.JK']: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:06:06 [ERROR] $MPRO.JK: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:06:06 [ERROR] 
+1 Failed download:
+2026-05-11 09:06:06 [ERROR] ['MPRO.JK']: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:06:08 [ERROR] $MTPS.JK: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:06:08 [ERROR] 
+1 Failed download:
+2026-05-11 09:06:08 [ERROR] ['MTPS.JK']: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:06:08 [ERROR] $MTSM.JK: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:06:08 [ERROR] 
+1 Failed download:
+2026-05-11 09:06:08 [ERROR] ['MTSM.JK']: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:06:25 [ERROR] $PLIN.JK: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:06:25 [ERROR] 
+1 Failed download:
+2026-05-11 09:06:25 [ERROR] ['PLIN.JK']: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:06:33 [ERROR] $PTMR.JK: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:06:33 [ERROR] 
+1 Failed download:
+2026-05-11 09:06:33 [ERROR] ['PTMR.JK']: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:06:35 [ERROR] $RAFI.JK: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:06:35 [ERROR] 
+1 Failed download:
+2026-05-11 09:06:35 [ERROR] ['RAFI.JK']: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:06:47 [ERROR] $SMCB.JK: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:06:47 [ERROR] 
+1 Failed download:
+2026-05-11 09:06:47 [ERROR] ['SMCB.JK']: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:06:55 [ERROR] $SUPR.JK: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:06:55 [ERROR] 
+1 Failed download:
+2026-05-11 09:06:55 [ERROR] ['SUPR.JK']: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:07:00 [ERROR] $TGUK.JK: possibly delisted; no price data found  (period=5d)
+2026-05-11 09:07:00 [ERROR] 
+1 Failed download:
+2026-05-11 09:07:00 [ERROR] ['TGUK.JK']: possibly delisted; no price data found  (period=5d)
